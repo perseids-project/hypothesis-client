@@ -33,7 +33,6 @@ module HypothesisApi
       model = {}
       begin
         orig_annot = JSON.parse(data)
-        Rails.logger.info(orig_annot.inspect)
         model[:sourceUri] = source
         model[:origTarget] = orig_annot["uri"]
         # if we have updated at, use that as annotated at, otherwise use created 
@@ -50,12 +49,11 @@ module HypothesisApi
           target[:uri] = t["source"]
           target[:selectors] = {}
           t["selector"].each do |s|
-            target[:selectors][s.type] = s
+            target[:selectors][s["type"]] = s
           end
           model[:targets] << target
         end
-        Rails.logger.info(model.inspect)
-      rescue Exception => e
+      rescue => e
          raise e
       end
       @mapper.map(model)
