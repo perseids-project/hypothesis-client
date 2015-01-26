@@ -7,7 +7,7 @@ describe HypothesisApi::MapperPrototype do
 
   context "basic test" do 
     input = File.read(File.join(File.dirname(__FILE__), 'support', 'test1.json')) 
-    let(:model) { client.transform_data('test',input) }
+    let(:model) { client.transform_data('test',JSON.parse(input))}
 
     it 'mapped the source uri' do
       expect(model[:sourceUri]).to eq('test')

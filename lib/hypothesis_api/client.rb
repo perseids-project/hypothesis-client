@@ -1,5 +1,6 @@
 require 'json'
 require 'uri'
+require 'net/https'
 
 module HypothesisApi
 
@@ -9,30 +10,37 @@ module HypothesisApi
       @mapper = mapper
     end
 
-    def get(uri)
+    def get(a_uri)
       respobj = {}
       begin
-        uri = URI.parse(uri)
-        response = Net::HTTP.start(uri.host, uri.port) do |http|
-          http.send_request('GET',uri.request_uri)
-        end
+        uri = URI.parse(a_uri)
+        id = uri.path.split(/\//).last
+        uri.path = "/api/annotations/#{id}"
+        http = Net::HTTP.new(uri.host, uri.port) 
+        http.use_ssl = true
+        headers = {'Accept' => 'application/json'}
+        response = http.send_request('GET',uri.request_uri,nil,headers)
         if (response.code == '200') 
-          transform_data(response.body)
+          orig_annot = JSON.parse(response.body)
+          respobj['mapped'] = transform_data(a_uri,orig_annot)
+          respobj['rawdata'] = orig_annot
         else
           respobj = { :is_error  => true,
-                      :error => "HTTP #{response.code}" }
+                      :error => "HTTP #{response.code}",
+                      :rawdata => response
+                    }
         end
-      rescue Exception => e
+      rescue => e
         respobj = { :is_error  => true,
-                    :error => e }
+                    :error => e.backtrace }
       end
       respobj
+      
     end
 
-    def transform_data(source,data)
+    def transform_data(source,orig_annot)
       model = {}
       begin
-        orig_annot = JSON.parse(data)
         model[:sourceUri] = source
         model[:origTarget] = orig_annot["uri"]
         # if we have updated at, use that as annotated at, otherwise use created 
@@ -49,7 +57,9 @@ module HypothesisApi
           target[:uri] = t["source"]
           target[:selectors] = {}
           t["selector"].each do |s|
-            target[:selectors][s["type"]] = s
+            unless s.nil?
+              target[:selectors][s["type"]] = s
+            end
           end
           model[:targets] << target
         end
