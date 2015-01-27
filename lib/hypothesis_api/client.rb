@@ -6,6 +6,9 @@ module HypothesisApi
 
   class Client
 
+    AGENT_URI = 'https://hypothes.is'
+    FORMAT_OALD = 1 
+
     def initialize(mapper)
       @mapper = mapper
     end
@@ -41,6 +44,7 @@ module HypothesisApi
     def transform_data(source,orig_annot)
       model = {}
       begin
+        model[:agentUri] = AGENT_URI
         model[:sourceUri] = source
         model[:origTarget] = orig_annot["uri"]
         # if we have updated at, use that as annotated at, otherwise use created 
@@ -51,22 +55,23 @@ module HypothesisApi
         orig_annot["tags"].each do |t|
           model[:bodyTags][t] = 1
         end
-        model[:targets] = []
         orig_annot["target"].each do |t|
           target = {} 
-          target[:uri] = t["source"]
-          target[:selectors] = {}
+          target[:targetUri] = t["source"]
+          target[:TextQuoteSelector] = {}
+          # we only want the textquoteselector for now
           t["selector"].each do |s|
-            unless s.nil?
-              target[:selectors][s["type"]] = s
+            if ! s.nil? && s["type"] == 'TextQuoteSelector'
+              target[:TextQuoteSelector] = s
             end
           end
-          model[:targets] << target
+          # we only support a single target for now
+          model[:target] = target
         end
       rescue => e
-         raise e
+       raise e
       end
-      @mapper.map(model)
+      @mapper.map(agent,source,model,FORMAT_OALD)
     end
 
   end
