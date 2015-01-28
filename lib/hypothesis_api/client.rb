@@ -24,13 +24,19 @@ module HypothesisApi
         headers = {'Accept' => 'application/json'}
         response = http.send_request('GET',uri.request_uri,nil,headers)
         if (response.code == '200') 
+          respobj = { }
           orig_annot = JSON.parse(response.body)
-          respobj['mapped'] = map(a_uri,orig_annot)
-          respobj['rawdata'] = orig_annot
+          mapped = map(a_uri,orig_annot)
+          if (mapped[:errors].length > 0) 
+            respobj[:is_error] = true
+            respobj[:error] = mapped[:errors].join("\n")
+          else 
+            respobj['data'] = mapped[:data]
+          end 
+           
         else
           respobj = { :is_error  => true,
                       :error => "HTTP #{response.code}",
-                      :rawdata => response
                     }
         end
       rescue => e

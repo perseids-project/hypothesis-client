@@ -197,7 +197,7 @@ module HypothesisApi::MapperPrototype
       end #end test on original target uri 
       if (response[:errors].length == 0)
         if (format == HypothesisApi::Client::FORMAT_OALD)
-          response[:oa] = to_oa(model)
+          response[:data] = to_oa(model)
         else
           response[:errors] << "Only OA JSON-LD format supported"
         end

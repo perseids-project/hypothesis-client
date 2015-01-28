@@ -11,27 +11,27 @@ describe HypothesisApi::MapperPrototype do
 
     it 'produced oa' do 
       expect(mapped[:errors]).to match_array([])
-      expect(mapped[:oa]).to be_truthy
+      expect(mapped[:data]).to be_truthy
     end
 
     it 'mapped the source uri' do
-      expect(mapped[:oa]["dcterms:source"]).to eq('test')
+      expect(mapped[:data]["dcterms:source"]).to eq('test')
     end
 
     it 'mapped the body text' do
-      expect(mapped[:oa]["hasBody"]["@id"]).to eq("http://data.perseus.org/citations/urn:cts:greekLit:tlg0012.tlg001:6.222")
+      expect(mapped[:data]["hasBody"]["@id"]).to eq("http://data.perseus.org/citations/urn:cts:greekLit:tlg0012.tlg001:6.222")
     end
 
     it 'mapped the sourceText' do 
-      expect(mapped[:oa]["hasTarget"]["hasSource"]["@id"]).to eq("#{HypothesisApi::MapperPrototype::JOTH::SMITH_TEXT_CTS}:diomedes-1")
+      expect(mapped[:data]["hasTarget"]["hasSource"]["@id"]).to eq("#{HypothesisApi::MapperPrototype::JOTH::SMITH_TEXT_CTS}:diomedes-1")
     end
     
     it 'mapped the motivation' do
-      expect(mapped[:oa]["motivatedBy"]).to eq("oa:identifying")
+      expect(mapped[:data]["motivatedBy"]).to eq("oa:identifying")
     end
 
     it 'made a title' do
-      expect(mapped[:oa]["dcterms:title"]).to eq("http://data.perseus.org/citations/urn:cts:greekLit:tlg0012.tlg001:6.222 identifies II. 6.222 in #{HypothesisApi::MapperPrototype::JOTH::SMITH_TEXT_CTS}:diomedes-1")
+      expect(mapped[:data]["dcterms:title"]).to eq("http://data.perseus.org/citations/urn:cts:greekLit:tlg0012.tlg001:6.222 identifies II. 6.222 in #{HypothesisApi::MapperPrototype::JOTH::SMITH_TEXT_CTS}:diomedes-1")
     end
 
   end
