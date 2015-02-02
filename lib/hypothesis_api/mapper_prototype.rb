@@ -135,6 +135,7 @@ module HypothesisApi::MapperPrototype
                 response[:errors] << "No valid relation tag" 
               end
            elsif body_tags["place"] && PLEIADES_URI_MATCH.match(data["text"])
+             model[:isPlace] = true
              # we support just pleiades uris for now
              data["text"].scan(PLEIADES_URI_MATCH).each do |p|
                model[:bodyUri] << "#{p}#this"
@@ -254,8 +255,15 @@ module HypothesisApi::MapperPrototype
     # bodyUri <is linked to|identifies> <text> [as <relationship>] in bodyUri
     def make_title(obj) 
       motivation_text = obj[:motivation] == 'oa:linking' ? 'is linked to' : 'identifies'
-      relation_text = obj[:relationTerms] ? " as #{obj[:relationTerms].join(", ")} " : ""
-      "#{obj[:bodyUri].join(", ")} #{motivation_text} #{obj[:targetSelector]['exact']}#{relation_text} in #{obj[:targetCTS]}"
+      as_text = ""
+      if (obj[:relationTerms].length > 0)
+        as_text = " as #{obj[:relationTerms].join(", ")}" 
+      elsif obj[:isPlace] 
+        as_text = " as place"
+      elsif obj[:isCitation] 
+        as_text = " as citation"
+      end  
+      "#{obj[:bodyUri].join(", ")} #{motivation_text} #{obj[:targetSelector]['exact']}#{as_text} in #{obj[:targetCTS]}"
     end
 
   end #end JOTH class

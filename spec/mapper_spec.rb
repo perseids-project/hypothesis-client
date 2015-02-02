@@ -31,7 +31,7 @@ describe HypothesisApi::MapperPrototype do
     end
 
     it 'made a title' do
-      expect(mapped[:data]["dcterms:title"]).to eq("http://data.perseus.org/citations/urn:cts:greekLit:tlg0012.tlg001:6.222 identifies II. 6.222 in #{HypothesisApi::MapperPrototype::JOTH::SMITH_TEXT_CTS}:diomedes-1")
+      expect(mapped[:data]["dcterms:title"]).to eq("http://data.perseus.org/citations/urn:cts:greekLit:tlg0012.tlg001:6.222 identifies II. 6.222 as citation in #{HypothesisApi::MapperPrototype::JOTH::SMITH_TEXT_CTS}:diomedes-1")
     end
 
   end
