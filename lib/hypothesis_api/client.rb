@@ -31,7 +31,7 @@ module HypothesisApi
             respobj[:is_error] = true
             respobj[:error] = mapped[:errors].join("\n")
           else 
-            respobj['data'] = mapped[:data]
+            respobj[:data] = mapped[:data]
           end 
            
         else

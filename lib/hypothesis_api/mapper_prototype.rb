@@ -56,52 +56,12 @@ module HypothesisApi::MapperPrototype
       'husband' => 'perseusrdf:HusbandOf'
     }
 
-    OA_CONTEXT =  {
-      "oa" => "http://www.w3.org/ns/oa#",
-      "cnt" => "http://www.w3.org/2011/content#",
-      "dc" => "http://purl.org/dc/elements/1.1/",
-      "dcterms" => "http://purl.org/dc/terms/",
-      "dctypes" => "http://purl.org/dc/dcmitype/",
-      "foaf" => "http://xmlns.com/foaf/0.1/",
-      "rdf"  => "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-      "rdfs" => "http://www.w3.org/2000/01/rdf-schema#",
-      "skos" => "http://www.w3.org/2004/02/skos/core#",
+    OA_CONTEXT = "http://www.w3.org/ns/oa-context-20130208.json" 
+
+    REL_GRAPH_CONTEXT =  {
       "snap" => "http://onto.snapdrgn.net/snap#",
       "lawd" => "http://lawd.info/ontology/",
-      "perseusrdf" => "http://data.perseus.org/rdfvocab/addons/",
-      "hasBody" => {"@type" => "@id", "@id" => "oa:hasBody"},
-      "hasTarget" => {"@type" => "@id", "@id" => "oa:hasTarget"},
-      "hasSource" => {"@type" => "@id", "@id" => "oa:hasSource"},
-      "hasSelector" => {"@type" => "@id", "@id" => "oa:hasSelector"},
-      "hasState" => {"@type" => "@id", "@id" => "oa:hasState"},
-      "hasScope" => {"@type" => "@id", "@id" => "oa:hasScope"},
-      "annotatedBy" => {"@type" => "@id", "@id" => "oa:annotatedBy"},
-      "serializedBy" => {"@type" => "@id", "@id" => "oa:serializedBy"},
-      "motivatedBy" => {"@type" => "@id", "@id" => "oa:motivatedBy"},
-      "equivalentTo" => {"@type" => "@id", "@id" => "oa:equivalentTo"},
-      "styledBy" => {"@type" => "@id", "@id" => "oa:styledBy"},
-      "cachedSource" => {"@type" => "@id", "@id" => "oa:cachedSource"},
-      "conformsTo" => {"@type" => "@id", "@id" => "dcterms:conformsTo"},
-      "default" => {"@type" => "@id", "@id" => "oa:default"},
-      "item" => {"@type" => "@id", "@id" => "oa:item"},
-      "first" => {"@type" => "@id", "@id" => "rdf:first"},
-      "rest" =>  {"@type" => "@id", "@id" => "rdf:rest", "@container" => "@list"},
-      "chars" => "cnt:chars",
-      "bytes" => "cnt:bytes",
-      "format" => "dc:format",
-      "annotatedAt" => "oa:annotatedAt",
-      "serializedAt" => "oa:serializedAt",
-      "when" => "oa:when",
-      "value" => "rdf:value",
-      "start" => "oa:start",
-      "end" => "oa:end",
-      "exact" => "oa:exact",
-      "prefix" => "oa:prefix",
-      "suffix" => "oa:suffix",
-      "label" => "rdfs:label",
-      "name" => "foaf:name",
-      "mbox" => "foaf:mbox",
-      "styleClass" => "oa:styleClass"
+      "perseusrdf" => "http://data.perseus.org/rdfvocab/addons/"
     }
 
     # Map the data as provided by Hypothes.is to our expected data model
@@ -118,6 +78,7 @@ module HypothesisApi::MapperPrototype
       begin
         model[:agentUri] = agent
         model[:sourceUri] = source
+        model[:userid] = data["user"].sub!(/^acct:/,'')
         # if we have updated at, use that as annotated at, otherwise use created 
         model[:date] = data["updated"] ? data["updated"]: data["created"]
         body_tags = {}
@@ -149,20 +110,31 @@ module HypothesisApi::MapperPrototype
            model[:motivation] ="oa:identifying"
            model[:targetPerson] = "#{SMITH_PERSON_URI}#{parts[1]}#{parts[2]}#this" 
            model[:targetCTS] = "#{SMITH_TEXT_CTS}:#{parts[1]}#{parts[2]}"
-           model[:bodyUri] = ""
-           if body_tags[:person] && data["text"] =~ /(.*?)-bio(-\d+)?/
-             if body_tags["relation"]
-                model[:isRelation] = true
-                body_tags.keys.each do |k|
-                    model[:relationTerm] = ONTO_MAP[k.downcase]        
-                end #end iteration of tags
-                unless model[:relationTerm]
-                  response[:errors] << "Invalid relation tag" 
+           model[:bodyUri] = []
+           model[:relationTerms] = []
+           if body_tags["relation"] && SMITH_BIO_MATCH.match(data["text"])
+              model[:isRelation] = true
+              relation_parts = SMITH_BIO_MATCH.match(data["text"])
+              if relation_parts
+                model[:bodyUri] << "#{SMITH_PERSON_URI}#{relation_parts[1]}#{relation_parts[2]}#this" 
+              else
+                data["text"].scan(URI.regexp) do |*matches|
+                  model[:bodyUri] << $&
                 end
-             else
-               response[:errors] << "Missing relation tag" 
-             end
-           elsif body_tags[:place] && PLEIADES_URI_MATCH.match(data["text"])
+              end
+              if (model[:bodyUri].length == 0) 
+                response[:errors] << "Unable to parse person from #{data["text"]}"
+              end
+              body_tags.keys.each do |k|
+                mapped = ONTO_MAP[k.downcase]        
+                unless mapped.nil?
+                  model[:relationTerms] << mapped
+                end
+              end #end iteration of tags
+              unless model[:relationTerms].length > 0
+                response[:errors] << "No valid relation tag" 
+              end
+           elsif body_tags["place"] && PLEIADES_URI_MATCH.match(data["text"])
              # we support just pleiades uris for now
              data["text"].scan(PLEIADES_URI_MATCH).each do |p|
                model[:bodyUri] << "#{p}#this"
@@ -210,8 +182,11 @@ module HypothesisApi::MapperPrototype
       oa['@context'] = OA_CONTEXT
       # leave oa[@id] and oa[@annotatedBy] to be set from calling code?
       # ideally we would preserve the provenance chain better here
-      oa['@id'] = ""
-      oa['annotatedBy'] = "" 
+      oa['@id'] = obj[:sourceUri] 
+      oa['annotatedBy'] = { 
+        "@type" => "foaf:Person", 
+        "@id" => obj[:userid]
+      }
       oa['@type'] = "oa:Annotation"
       oa['dcterms:source'] = obj[:sourceUri]
       oa['dcterms:title'] = make_title(obj)
@@ -221,11 +196,11 @@ module HypothesisApi::MapperPrototype
       oa['serializedBy']['@id'] = obj[:agentUri]
       oa['serializedBy']['@type'] = "prov:SoftwareAgent"
       oa['hasTarget'] = {
-        "@id" => "", # generate a uuid
+        "@id" => "#{obj[:sourceUri]}#target-1",
         "@type" => "oa:SpecificResource", 
         "hasSource" => { '@id' => obj[:targetCTS] },
         "hasSelector" => {
-          "@id" => "", # generate a uuid
+          "@id" => "#{obj[:sourceUri]}#target-1-sel-1",
           "@type" => "oa:TextQuoteSelector",
           "exact" => obj[:targetSelector]["exact"],
           "prefix" => obj[:targetSelector]["prefix"],
@@ -235,28 +210,42 @@ module HypothesisApi::MapperPrototype
       ## THIS TECHNICALLY ISN'T VALID OA to EMBED A JSON-LD named graph without
       ## a graph id but I'm having trouble caring...
       if obj[:isRelation]
-        oa['hasBody'] = [ 
-          { "@graph"  => [ 
-            {
-              "@id" =>  obj[:targetPerson],
-              "snap:has-bond" =>  {
-                "@id" => "" # generate a uuid
-               }
-            },
-            {
-              "@id" => "", # uuid generated above
-              "@type" => obj[:relationTerm],
-              "snap:bond-with" => {
-                "@id" => obj[:bodyUri]
+        graph = []
+        obj[:relationTerms].each_with_index do |t,i|
+          bond_uri = "#{obj[:sourceUri]}#bond-#{i+1}"
+          graph << 
+              {
+                "@id" =>  obj[:targetPerson],
+                "snap:has-bond" =>  {
+                  "@id" => bond_uri
+                 }
               }
-            } ] 
-          } 
-        ]
+          obj[:bodyUri].each do |u|
+	    graph << 
+              {
+                "@id" => bond_uri,
+                "@type" => t,
+                "snap:bond-with" => {
+                  "@id" => u
+                }
+              }
+          end
+        end  
+        oa['hasBody'] = { 
+          "@context" => REL_GRAPH_CONTEXT,
+          "@graph" => graph 
+        }
       elsif obj[:isCitation]
+         oa['hasBody'] = []
          # oa[:hasBody] = "" # TODO graph of the citation relationships
-         oa['hasBody'] = { "@id" => obj[:bodyUri] }
+         obj[:bodyUri].each do |u|
+           oa['hasBody'] << { "@id" => u }
+         end
       else
-         oa['hasBody'] = { "@id" => obj[:bodyUri] }
+         oa['hasBody'] = []
+         obj[:bodyUri].each do |u|
+           oa['hasBody'] << { "@id" => u }
+         end
       end
       oa
     end
@@ -265,8 +254,8 @@ module HypothesisApi::MapperPrototype
     # bodyUri <is linked to|identifies> <text> [as <relationship>] in bodyUri
     def make_title(obj) 
       motivation_text = obj[:motivation] == 'oa:linking' ? 'is linked to' : 'identifies'
-      relation_text = obj[:relationTerm] ? " as #{obj[:relationTerm]} " : ""
-      "#{obj[:bodyUri]} #{motivation_text} #{obj[:targetSelector]['exact']}#{relation_text} in #{obj[:targetCTS]}"
+      relation_text = obj[:relationTerms] ? " as #{obj[:relationTerms].join(", ")} " : ""
+      "#{obj[:bodyUri].join(", ")} #{motivation_text} #{obj[:targetSelector]['exact']}#{relation_text} in #{obj[:targetCTS]}"
     end
 
   end #end JOTH class
