@@ -1,0 +1,1 @@
+require 'hypothesis-client/client'

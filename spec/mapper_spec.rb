@@ -1,9 +1,9 @@
 require 'spec_helper'
-require 'hypothesis_api/client'
-require 'hypothesis_api/mapper_prototype'
+require 'hypothesis-client/client'
+require 'hypothesis-client/mapper_prototype'
 
-describe HypothesisApi::MapperPrototype do
-  let(:client) { HypothesisApi::Client.new(HypothesisApi::MapperPrototype::JOTH.new) }
+describe HypothesisClient::MapperPrototype do
+  let(:client) { HypothesisClient::Client.new(HypothesisClient::MapperPrototype::JOTH.new) }
 
   context "basic test" do 
     input = File.read(File.join(File.dirname(__FILE__), 'support', 'test1.json')) 
@@ -23,7 +23,7 @@ describe HypothesisApi::MapperPrototype do
     end
 
     it 'mapped the sourceText' do 
-      expect(mapped[:data]["hasTarget"]["hasSource"]["@id"]).to eq("#{HypothesisApi::MapperPrototype::JOTH::SMITH_TEXT_CTS}:diomedes-1")
+      expect(mapped[:data]["hasTarget"]["hasSource"]["@id"]).to eq("#{HypothesisClient::MapperPrototype::JOTH::SMITH_TEXT_CTS}:diomedes-1")
     end
     
     it 'mapped the motivation' do
@@ -31,7 +31,7 @@ describe HypothesisApi::MapperPrototype do
     end
 
     it 'made a title' do
-      expect(mapped[:data]["dcterms:title"]).to eq("http://data.perseus.org/citations/urn:cts:greekLit:tlg0012.tlg001:6.222 identifies II. 6.222 as citation in #{HypothesisApi::MapperPrototype::JOTH::SMITH_TEXT_CTS}:diomedes-1")
+      expect(mapped[:data]["dcterms:title"]).to eq("http://data.perseus.org/citations/urn:cts:greekLit:tlg0012.tlg001:6.222 identifies II. 6.222 as citation in #{HypothesisClient::MapperPrototype::JOTH::SMITH_TEXT_CTS}:diomedes-1")
     end
 
   end

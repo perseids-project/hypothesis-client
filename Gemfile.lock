@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    hypothesis_api (0.0.1)
+    hypothesis-client (0.0.1)
 
 GEM
   remote: https://rubygems.org/
@@ -26,6 +26,6 @@ PLATFORMS
 
 DEPENDENCIES
   bundler (~> 1.6)
-  hypothesis_api!
+  hypothesis-client!
   rake (~> 10.0)
   rspec
