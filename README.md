@@ -1,2 +1,2 @@
-# hypothesis_api
+# hypothesis-client
 Perseids Prototype Hypothesis Client API
