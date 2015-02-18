@@ -35,7 +35,7 @@ describe HypothesisClient::MapperPrototype do
     end
 
   end
-  context "relation test" do 
+  context "relation 1 test" do 
     input = File.read(File.join(File.dirname(__FILE__), 'support', 'relation1.json')) 
     let(:mapped) { client.map("test",JSON.parse(input))}
 
@@ -52,6 +52,26 @@ describe HypothesisClient::MapperPrototype do
       expect(mapped[:data]["hasBody"]["@graph"][1]["@id"]).to eq("test#bond-1")
       expect(mapped[:data]["hasBody"]["@graph"][3]["@id"]).to eq("test#bond-2")
       expect(mapped[:data]["hasBody"]["@graph"][3]["snap:bond-with"]["@id"]).to eq("http://data.perseus.org/people/smith:castor-1#this")
+    end
+  end
+  context "relation 2 test" do 
+    input = File.read(File.join(File.dirname(__FILE__), 'support', 'relation2.json')) 
+    let(:mapped) { client.map("test",JSON.parse(input))}
+
+    it 'produced oa' do 
+      expect(mapped[:errors]).to match_array([])
+      expect(mapped[:data]).to be_truthy
+    end
+
+    it 'graphed the relation' do
+      expect(mapped[:data]["hasBody"]).to be_truthy
+      expect(mapped[:data]["hasBody"]["@graph"]).to be_truthy
+      expect(mapped[:data]["hasBody"]["@graph"][0]).to be_truthy
+      expect(mapped[:data]["hasBody"]["@graph"][0]["@id"]).to eq("http://data.perseus.org/people/smith:clytaemnestra-1#this")
+      expect(mapped[:data]["hasBody"]["@graph"][1]["@id"]).to eq("test#bond-1")
+      expect(mapped[:data]["hasBody"]["@graph"][3]["@id"]).to eq("test#bond-2")
+      expect(mapped[:data]["hasBody"]["@graph"][5]["@id"]).to eq("test#bond-3")
+      expect(mapped[:data]["hasBody"]["@graph"][5]["snap:bond-with"]["@id"]).to eq("http://data.perseus.org/people/smith:castor-1#this")
     end
   end
 end
