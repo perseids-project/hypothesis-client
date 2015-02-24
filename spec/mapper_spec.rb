@@ -38,6 +38,13 @@ describe HypothesisClient::MapperPrototype do
     end
 
   end
+  context "bad cites test" do 
+    input = File.read(File.join(File.dirname(__FILE__), 'support', 'testbadcite.json')) 
+    let(:mapped) { client.map("test",JSON.parse(input))}
+    it 'reports error' do
+      expect(mapped[:errors]).to match_array(["Invalid Citation URN http://data.perseus.org/citations/urn:cts:foo"])
+    end
+  end
   context "cites test" do 
     input = File.read(File.join(File.dirname(__FILE__), 'support', 'testcite.json')) 
     let(:mapped) { client.map("test",JSON.parse(input))}

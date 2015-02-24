@@ -163,7 +163,7 @@ module HypothesisClient::MapperPrototype
                 model[:bodyUri] << u
                 model[:bodyCts] << parse_urn(u)
               rescue => e
-                response[:errors] << e
+                response[:errors] << "Invalid Citation URN #{u}"
               end
              end
              unless model[:bodyUri].length > 0
