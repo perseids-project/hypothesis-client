@@ -128,7 +128,7 @@ module HypothesisClient::MapperPrototype
            name = parts[1].downcase
            # smiths has a 2 level cite scheme with the first level being
            # the alphabetical grouping
-           entry = name[0].upcase!
+           entry = name.slice(0,1).upcase!
            model[:motivation] ="oa:identifying"
            model[:targetPerson] = "#{SMITH_PERSON_URI}#{name}#{parts[2]}#this" 
            model[:targetCTS] = "#{SMITH_TEXT_CTS}:#{entry}.#{name}#{parts[2].sub!(/-/,'_')}"
