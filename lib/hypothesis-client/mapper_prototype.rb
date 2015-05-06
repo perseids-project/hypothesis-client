@@ -251,7 +251,7 @@ module HypothesisClient::MapperPrototype
         }
       }
       ## THIS TECHNICALLY ISN'T VALID OA to EMBED A JSON-LD named graph without
-      ## a graph id but I'm having trouble caring...
+      ## a graph id  ... fix at some point soon 
       if obj[:isRelation]
         graph = []
         obj[:relationTerms].each_with_index do |t,i|
