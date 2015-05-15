@@ -55,7 +55,7 @@ module HypothesisClient::MapperPrototype
             'place' => [ HypothesisClient::Helpers::Uris::Pleiades ],
             'relation' => [ HypothesisClient::Helpers::Uris::VisibleWords, HypothesisClient::Helpers::Uris::Any.class ],
             'person' => [ HypothesisClient::Helpers::Uris::VisibleWords, HypothesisClient::Helpers::Uris::Any.class ],
-            'target' => [ HypothesisClient::Helpers::Uris::PerseidsText ]
+            'target' => [ HypothesisClient::Helpers::Uris::Perseids ]
           }
         } 
       end
@@ -171,6 +171,8 @@ module HypothesisClient::MapperPrototype
           unless model[:relationTerms].length > 0
             response[:errors] << "No valid relation tag" 
           end
+        elsif body_tags["person"] 
+          model[:isPerson] = true 
         elsif body_tags["place"] 
           model[:isPlace] = true
         elsif body_tags["citation"]
@@ -337,6 +339,8 @@ module HypothesisClient::MapperPrototype
         as_text = " as #{obj[:relationTerms].join(", ")}" 
       elsif obj[:isPlace] 
         as_text = " as place"
+      elsif obj[:isPerson] 
+        as_text = " as person"
       elsif obj[:isCitation] 
         as_text = " as citation"
       elsif obj[:isAttestation] 

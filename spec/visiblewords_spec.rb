@@ -4,7 +4,7 @@ require 'hypothesis-client/helpers'
 describe HypothesisClient::Helpers::Uris::VisibleWords do
 
   context "successful match" do 
-    let(:mapped) { HypothesisClient::Helpers::Uris::VisibleWords.new("JohnDoe_1") }
+    let(:mapped) { HypothesisClient::Helpers::Uris::VisibleWords.new("visiblewords:JohnDoe_1") }
 
     it 'mapped' do
       expect(mapped.can_match).to be true 

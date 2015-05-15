@@ -177,4 +177,29 @@ describe HypothesisClient::MapperPrototype do
       expect(mapped[:data]["hasBody"]["@graph"][0]["@id"]).to eq("http://data.perseus.org/people/smith:clytaemnestra-1#this")
     end
   end
+  context "basic visiblewords test" do 
+    input = File.read(File.join(File.dirname(__FILE__), 'support', 'person1.json')) 
+    let(:mapped) { client.map("test",JSON.parse(input))}
+
+    it 'produced oa' do 
+      expect(mapped[:errors]).to match_array([])
+      expect(mapped[:data]).to be_truthy
+    end
+
+    it 'mapped the source uri' do
+      expect(mapped[:data]["dcterms:source"]).to eq(nil)
+    end
+
+    it 'mapped the body text' do
+      expect(mapped[:data]["hasBody"][0]["@id"]).to eq("http://data.perseus.org/people/visiblewords:johndoe_1#this")
+    end
+
+    it 'mapped the motivation' do
+      expect(mapped[:data]["motivatedBy"]).to eq("oa:identifying")
+    end
+
+    it 'made a title' do
+      expect(mapped[:data]["dcterms:title"]).to eq("http://data.perseus.org/people/visiblewords:johndoe_1#this identifies Boeotia as person in http://sosol.perseids.org/sosol/publications/12018/epi_cts_identifiers/15754/preview")
+    end
+  end
 end

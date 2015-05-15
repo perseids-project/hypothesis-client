@@ -4,7 +4,7 @@ module HypothesisClient
       class VisibleWords
 
         PERSON_URI = "http://data.perseus.org/people/visiblewords:"
-        BIO_MATCH = Regexp.new('^(\w+)(_\d+)$')
+        BIO_MATCH = Regexp.new('^visiblewords:(\w+)(_\d+)$')
 
         attr_accessor :can_match, :error, :uris, :cts, :text
         def initialize(a_content)
