@@ -10,57 +10,6 @@ module HypothesisClient::MapperPrototype
     # some hardcoded URIs and match strings for the mapping
     CATALOG_URI = 'http://data.perseus.org/catalog/'
     TEXT_URI = 'http://data.perseus.org/texts/'
-    PERSEUS_URI = Regexp.new("http:\/\/data.perseus.org\/citations\/urn:cts:[^\S\n]+" )
-    CTS_PASSAGE_URN = Regexp.new("urn:cts:(.*?):([^\.]+)(?:\.([^\.]+))\.?(.*?)?:(.+)$")
-    CTS_URN = Regexp.new("urn:cts:(.*?):([^\.]+)\.(?:([^\.]+)\.)?([^:]+)?$")
-    SMITH_HOPPER_URI = Regexp.new('Perseus:text:1999.04.0104')
-    SMITH_TEXT_CTS = "urn:cts:pdlrefwk:viaf88890045.003.perseus-eng1"
-    SMITH_PERSON_URI = "http://data.perseus.org/people/smith:"
-    SMITH_BIO_MATCH = Regexp.new('(\w+)-bio(-\d+)?')
-    SMITH_BIO_ENTRY_MATCH = Regexp.new('entry=(\w+)-bio(-\d+)?')
-    PLEIADES_URI_MATCH = /(http:\/\/pleiades.stoa.org\/places\/\d+)/
-    ONTO_MAP = {
-      'adoptedfamilyrelationship' => 'snap:AdoptedFamilyRelationship',
-      'ancestor' => 'snap:AncestorOf',
-      'aunt' => 'snap:AuntOf',
-      'brother' => 'snap:BrotherOf',
-      'child' => 'snap:ChildOf',
-      'claimedfamilyrelationship' => 'snap:ClaimedFamilyRelationship',
-      'cousin' => 'snap:CousinOf',
-      'daughter' => 'snap:DaugherOf',
-      'descendent' => 'snap:DescendentOf',
-      'father' => 'snap:FatherOf',
-      'fosterfamilyrelationship' => 'snap:FosterFamilyRelationship',
-      'grandchild' => 'snap:GrandchildOf',
-      'granddaughter' => 'snap:GranddaughterOf',
-      'grandfather' => 'snap:GranfatherOf',
-      'grandmother' => 'snap:GrandmotherOf',
-      'grandparent' => 'snap:GrandparentOf',
-      'grandson' => 'snap:GrandsonOf',
-      'greatgrandfather' => 'snap:GreatGrandfatherOf',
-      'greatgrandmother' => 'snap:GreatGrandmotherOf',
-      'greatgrandparent' => 'snap:GreatGrandparentOf',
-      'household' => 'snap:HouseHoldOf',
-      'inlawfamilyrelationship' => 'snap:InLawFamilyRelationship',
-      'intimaterelationship' => 'snap:IntimateRelationship',
-      'maternalfamilyrelationship' => 'snap:MaternalFamilyRelationship',
-      'mother' => 'snap:MotherOf',
-      'nephew' => 'snap:NephewOf',
-      'niece' => 'snap:NieceOf',
-      'parent' => 'snap:ParentOf',
-      'paternalfamilyrelationship' => 'snap:PaternalFamilyRelationship',
-      'sibling' => 'snap:SiblingOf',
-      'sister' => 'snap:SisterOf',
-      'slave' => 'snap:SlaveOf',
-      'son' => 'snap:SonOf',
-      'stepfamilyrelationship' => 'snap:StepFamilyRelationship',
-      'uncle' => 'snap:UncleOf',
-      'companion' => 'perseusrdf:CompanionOf',
-      'enemy' => 'perseusrdf:EnemyOf',
-      'wife' => 'perseusrdf:WifeOf',
-      'husband' => 'perseusrdf:HusbandOf'
-    }
-
     OA_CONTEXT = "http://www.w3.org/ns/oa-context-20130208.json" 
     LAWD_CITATION = "http://lawd.info/ontology/Citation"
     LAWD_WRITTENWORK = "http://lawd.info/ontology/WrittenWork"
@@ -72,10 +21,68 @@ module HypothesisClient::MapperPrototype
         
 
     REL_GRAPH_CONTEXT =  {
-      "snap" => "http://onto.snapdrgn.net/snap#",
       "lawd" => "http://lawd.info/ontology/",
-      "perseusrdf" => "http://data.perseus.org/rdfvocab/addons/"
     }
+
+    # TODO This bit of dealing with different annotation types
+    # and wiring the up to the appropriate helpers should all be 
+    # moved to a configurable manager class
+    def is_annotation_type?(a_tag)
+        a_tag == 'joth' || a_tag == 'visiblewords'
+    end
+
+    def get_annotation_type(a_tag)
+      type = nil
+      if (a_tag == 'joth')
+        type = { 
+          :type =>  a_tag,
+          :ontology => HypothesisClient::Helpers::Ontology::SNAP.new,
+          :uris =>  {
+            'attestation' => [ HypothesisClient::Helpers::Uris::Perseus ],
+            'citation' => [ HypothesisClient::Helpers::Uris::Perseus ],
+            'place' => [ HypothesisClient::Helpers::Uris::Pleiades ],
+            'person' => [ HypothesisClient::Helpers::Uris::Smith, HypothesisClient::Helpers::Uris::Any ],
+            'relation' => [ HypothesisClient::Helpers::Uris::Smith, HypothesisClient::Helpers::Uris::Any ],
+            'target' => [ HypothesisClient::Helpers::Uris::SmithText ]
+          }
+        }
+      elsif (a_tag == 'visiblewords')
+        type = { 
+          :type =>  a_tag,
+          :ontology => HypothesisClient::Helpers::Ontology::SNAP.new,
+          :uris =>  {
+            'attestation' => [ HypothesisClient::Helpers::Uris::Perseus ],
+            'citation' => [ HypothesisClient::Helpers::Uris::Perseus ],
+            'place' => [ HypothesisClient::Helpers::Uris::Pleiades ],
+            #'relation' => [ HypothesisClient::Helpers::Uris::VisibleWords, HypothesisClient::Helpers::Uris::Any.class ],
+            #'person' => [ HypothesisClient::Helpers::Uris::VisibleWords, HypothesisClient::Helpers::Uris::Any.class ],
+            'target' => [ HypothesisClient::Helpers::Uris::PerseidsText ]
+          }
+        } 
+      end
+      return type
+    end
+
+    def find_match(a_type,a_tags,a_content)
+      # iterate through the tags looking for the matchers
+      # for this type and tag
+      match_result = nil
+      a_tags.each do |t|
+        matchers = a_type[:uris][t]
+        if (matchers)
+          # iterate through the matchers until we get a result
+          # or else fall through to the end
+          matchers.each do |m| 
+            match_result = m.new(a_content)
+            if match_result.can_match
+              break;
+            end 
+          end
+        end
+      end
+      match_result
+    end
+
 
     # Map the data as provided by Hypothes.is to our expected data model
     # @param agent the URI for the hypothes.is software agent
@@ -102,7 +109,11 @@ module HypothesisClient::MapperPrototype
           t.split(/\s+/).each do |s|
             # also make sure we have lower case
             s.downcase!
-            body_tags[s] = 1
+            if is_annotation_type?(s)
+              @annotation_type = get_annotation_type(s)
+            else 
+              body_tags[s] = 1
+            end
           end # end split iteration
         end #end data tags iteration
         # we only support a single target for now so last gets kept
@@ -120,96 +131,63 @@ module HypothesisClient::MapperPrototype
         response[:errors] << e.to_s
       end # end begin on parsing data
 
-      # and here is where we hack for the Journey of the Hero data model
-      if SMITH_HOPPER_URI.match(data["uri"])
-        parts = SMITH_BIO_ENTRY_MATCH.match(data["uri"])
-        if (parts) 
-           # normalize the person - should be lower case
-           name = parts[1].downcase
-           # smiths has a 2 level cite scheme with the first level being
-           # the alphabetical grouping
-           entry = name.slice(0,1).upcase!
-           model[:motivation] ="oa:identifying"
-           model[:targetPerson] = "#{SMITH_PERSON_URI}#{name}#{parts[2]}#this" 
-           model[:targetCTS] = "#{SMITH_TEXT_CTS}:#{entry}.#{name}#{parts[2].sub!(/-/,'_')}"
-           model[:bodyUri] = []
-           model[:bodyCts] = []
-           model[:relationTerms] = []
-           if body_tags["relation"] && SMITH_BIO_MATCH.match(data["text"])
-              model[:isRelation] = true
-              relation_parts = SMITH_BIO_MATCH.match(data["text"])
-              if relation_parts
-                model[:bodyUri] << "#{SMITH_PERSON_URI}#{relation_parts[1]}#{relation_parts[2]}#this" 
-              else
-                data["text"].scan(URI.regexp) do |*matches|
-                  model[:bodyUri] << $&
-                end
-              end
-              if (model[:bodyUri].length == 0) 
-                response[:errors] << "Unable to parse person from #{data["text"]}"
-              end
-              body_tags.keys.each do |k|
-                mapped = ONTO_MAP[k.downcase]        
-                unless mapped.nil?
-                  model[:relationTerms] << mapped
-                end
-              end #end iteration of tags
-              unless model[:relationTerms].length > 0
-                response[:errors] << "No valid relation tag" 
-              end
-           elsif body_tags["place"] && PLEIADES_URI_MATCH.match(data["text"])
-             model[:isPlace] = true
-             # we support just pleiades uris for now
-             data["text"].scan(PLEIADES_URI_MATCH).each do |p|
-               model[:bodyUri] << "#{p}#this"
-             end
-             unless model[:bodyUri].length > 0
-               response[:errors] << "No valid place uris found"
-             end
-           elsif body_tags["citation"] && PERSEUS_URI.match(data["text"])
-             model[:isCitation] = true
-             # we support just perseus uris for now
-             data["text"].scan(PERSEUS_URI).each do |u|
-              begin
-                model[:bodyUri] << u
-                model[:bodyCts] << parse_urn(u)
-              rescue => e
-                response[:errors] << "Invalid Citation URN #{u}"
-              end
-             end
-             unless model[:bodyUri].length > 0
-               response[:errors] << "No valid citation uris found"
-             end
-           elsif body_tags["attestation"] && PERSEUS_URI.match(data["text"])
-             model[:isAttestation] = true
-             model[:motivation] ="oa:describing"
-             # we support just perseus uris for now
-             model[:bodyText] = data["text"]
-             data["text"].scan(PERSEUS_URI).each do |u|
-                model[:bodyUri] << u
-                model[:bodyCts] << parse_urn(u)
-                # we want the text that isn't part of the uris
-                model[:bodyText].sub!(u,'')
-             end
-             model[:bodyText].sub!(/^\n/,'')
-             model[:bodyText].sub!(/\n$/,'')
-             model[:bodyText].gsub!(/\n/,' ')
-           # otherwise we assume it's a plain link
-           else 
-             model[:motivation] ="oa:linking"
-             data["text"].scan(URI.regexp) do |*matches|
-               model[:bodyUri] << $&
-             end
-             unless model[:bodyUri].length > 0
-               response[:errors] << "No valid links found"
-             end
-           end
+      if @annotation_type.nil?
+        # todo should fail but backwards compatibility for now
+        @annotation_type = get_annotation_type('joth')
+      end
+      target_matcher = find_match(@annotation_type,['target'],data["uri"])
+      if (target_matcher.nil?)
+        response[:errors] << "Unknown target type #{data["uri"]}"
+      elsif (target_matcher.error)
+        response[:errors] << target_matcher.error
+      end
+      body_matcher = find_match(@annotation_type,body_tags.keys,data["text"])
+      if (body_matcher.nil?)
+        response[:errors] << "Unknown body type #{data["text"]} #{body_tags.keys.inspect}"
+      elsif (body_matcher.error)
+        response[:errors] << body_matcher.error
+      end
+
+      # only continue if we are error free
+      if (response[:errors].length == 0)
+        model[:ontology] = @annotation_type[:ontology]
+        model[:motivation] ="oa:identifying"
+        model[:targetPerson] = (target_matcher.uris)[0]
+        model[:targetCTS] = (target_matcher.cts)[0]
+        model[:bodyUri] = []
+        model[:bodyCts] = []
+        model[:relationTerms] = []
+        model[:bodyUri] = body_matcher.uris
+        if (model[:bodyUri].length == 0) 
+          response[:errors] << "Unable to parse body uri from #{data["text"]}"
+        end
+        if body_tags["relation"] 
+          model[:isRelation] = true
+          body_tags.keys.each do |k|
+            mapped = model[:ontology].get_term(k)        
+            unless mapped.nil?
+              model[:relationTerms] << mapped
+            end
+          end #end iteration of tags
+          unless model[:relationTerms].length > 0
+            response[:errors] << "No valid relation tag" 
+          end
+        elsif body_tags["place"] 
+          model[:isPlace] = true
+        elsif body_tags["citation"]
+          model[:isCitation] = true
+          model[:bodyCts] = body_matcher.cts
+        elsif body_tags["attestation"] 
+          model[:isAttestation] = true
+          model[:motivation] ="oa:describing"
+          model[:bodyText] = body_matcher.text
+          model[:bodyCts] = body_matcher.cts
         else 
-          response[:errors] << "Unable to parse smith bio entry"
-        end #end test on person part of uri
-      else 
-        response[:errors] << "Unable to parse smith text entry"
-      end #end test on original target uri 
+          # otherwise we assume it's a plain link
+          model[:motivation] ="oa:linking"
+        end
+      end 
+
       if (response[:errors].length == 0)
         if (format == HypothesisClient::Client::FORMAT_OALD)
           response[:data] = to_oa(model)
@@ -275,7 +253,7 @@ module HypothesisClient::MapperPrototype
           end
         end  
         oa['hasBody'] = { 
-          "@context" => REL_GRAPH_CONTEXT,
+          "@context" => REL_GRAPH_CONTEXT.merge(obj[:ontology].get_context()),
           "@graph" => graph 
         }
       elsif obj[:isCitation]
@@ -302,7 +280,7 @@ module HypothesisClient::MapperPrototype
           graph << make_citation_graph(u)
         end
         oa['hasBody'] = { 
-          "@context" => REL_GRAPH_CONTEXT,
+          "@context" => REL_GRAPH_CONTEXT.merge(obj[:ontology].get_context()),
           "@graph" => graph 
         }
       else
@@ -343,52 +321,6 @@ module HypothesisClient::MapperPrototype
        graph['rdfs:isDefinedBy'] = { '@id' => "#{CATALOG_URI}#{u['work']}"}
      end
      return graph
-    end
-
-    def parse_urn(uri)
-      urn_passage_parts = CTS_PASSAGE_URN.match(uri)
-      if (urn_passage_parts) 
-        ns = urn_passage_parts[1]
-        tg = urn_passage_parts[2]
-        wk = urn_passage_parts[3]
-        ver = urn_passage_parts[4]
-        psg = urn_passage_parts[5]
-      else
-        urn_parts = CTS_URN.match(uri)
-        if (urn_parts)
-          ns = urn_parts[1]
-          tg = urn_parts[2]
-          wk = urn_parts[3]
-          ver = urn_parts[4]
-        else
-         raise "Invalid urn #{urn}"
-        end
-      end
-
-      unless (ns && tg && wk)
-         raise "Invalid urn #{urn}"
-      end
-      if psg == '' || psg.nil?
-        if ver == '' || ver.nil?
-          # it's conceptual
-          type = LAWD_CONCEPTUALWORK
-        else
-          # if we have a version, it's a written work
-          type = LAWD_WRITTENWORK
-        end
-      else
-        # if we have a passage, its a citation
-        type = LAWD_CITATION
-      end
-
-      { 
-        'uri' => uri,   
-        "type" => type,
-        'textgroup' => "urn:cts:#{ns}:#{tg}",
-        'work' => "urn:cts:#{ns}:#{tg}.#{wk}",
-        'version' => ver == '' || ver.nil? ? nil : "urn:cts:#{ns}:#{tg}.#{wk}.#{ver}",
-        'passage' => type == LAWD_CITATION ? psg : nil
-      }
     end
 
     # make a descriptive title for the annotation in the form of
