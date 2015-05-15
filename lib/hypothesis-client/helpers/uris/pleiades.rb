@@ -16,10 +16,11 @@ module HypothesisClient
           @error = nil
           @content.scan(PLEIADES_URI_MATCH).each do |p|
             @can_match = true
-            unless (p =~ /#this$/) 
-              p = "#{p}#this"
+            place = p[0]
+            unless (place =~ /#this$/) 
+              place = place + "#this"
             end
-            @uris << p
+            @uris << place
           end
         end
       end

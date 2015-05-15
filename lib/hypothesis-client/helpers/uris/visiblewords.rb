@@ -1,10 +1,10 @@
 module HypothesisClient
   module Helpers
     module Uris
-      class Smith
+      class VisibleWords
 
-        PERSON_URI = "http://data.perseus.org/people/smith:"
-        BIO_MATCH = Regexp.new('(\w+)-bio(-\d+)?')
+        PERSON_URI = "http://data.perseus.org/people/visiblewords:"
+        BIO_MATCH = Regexp.new('^(\w+)(_\d+)$')
 
         attr_accessor :can_match, :error, :uris, :cts, :text
         def initialize(a_content)
