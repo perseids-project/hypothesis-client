@@ -53,8 +53,8 @@ module HypothesisClient::MapperPrototype
             'attestation' => [ HypothesisClient::Helpers::Uris::Perseus ],
             'citation' => [ HypothesisClient::Helpers::Uris::Perseus ],
             'place' => [ HypothesisClient::Helpers::Uris::Pleiades ],
-            'relation' => [ HypothesisClient::Helpers::Uris::VisibleWords, HypothesisClient::Helpers::Uris::Any.class ],
-            'person' => [ HypothesisClient::Helpers::Uris::VisibleWords, HypothesisClient::Helpers::Uris::Any.class ],
+            'relation' => [ HypothesisClient::Helpers::Uris::VisibleWords, HypothesisClient::Helpers::Uris::Any ],
+            'person' => [ HypothesisClient::Helpers::Uris::VisibleWords, HypothesisClient::Helpers::Uris::Any ],
             'target' => [ HypothesisClient::Helpers::Uris::Perseids ]
           }
         } 

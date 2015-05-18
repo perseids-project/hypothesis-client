@@ -202,4 +202,13 @@ describe HypothesisClient::MapperPrototype do
       expect(mapped[:data]["dcterms:title"]).to eq("http://data.perseus.org/people/visiblewords:johndoe_1#this identifies Boeotia as person in http://sosol.perseids.org/sosol/publications/12018/epi_cts_identifiers/15754/preview")
     end
   end
+  context "realdata visiblewords test" do 
+    input = File.read(File.join(File.dirname(__FILE__), 'support', 'visiblewords.json')) 
+    let(:mapped) { client.map("test",JSON.parse(input))}
+
+    it 'produced oa' do 
+      expect(mapped[:errors]).to match_array([])
+      expect(mapped[:data]).to be_truthy
+    end
+  end
 end
