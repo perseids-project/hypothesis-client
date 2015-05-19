@@ -179,7 +179,7 @@ module HypothesisClient::MapperPrototype
           # if there was any leftover text check to see if it is an attestation
           if (body_matcher.text =~ /hasAttestation/i)
             attest_matcher = find_match(@annotation_type,['attestation'],body_matcher.text)
-            model[:attestUri] = body_matcher.uris
+            model[:attestUri] = attest_matcher.uris
           end
           # if it was explicitly a relation annotation and we don't
           # have any terms, report an error
