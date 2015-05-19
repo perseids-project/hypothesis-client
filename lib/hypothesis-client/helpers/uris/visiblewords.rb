@@ -20,6 +20,8 @@ module HypothesisClient
             @uris << "#{PERSON_URI}#{name}#{u[2]}#this" 
             # keep any text that isn't part of the uris
             @text.sub!(u[0],'')
+            # make sure if a full person uri was already supplied we strip the whole thing out
+            @text.sub!(PERSON_URI,'')
             @text.sub!(/^\n/,'')
             @text.sub!(/\n$/,'')
             @text.sub!(/\n/,' ')
