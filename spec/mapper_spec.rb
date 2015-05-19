@@ -199,7 +199,7 @@ describe HypothesisClient::MapperPrototype do
       expect(mapped[:data]["hasBody"]).to be_truthy
       expect(mapped[:data]["hasBody"]["@graph"]).to be_truthy
       expect(mapped[:data]["hasBody"]["@graph"][0]["@id"]).to eq("test#rel-target")
-      expect(mapped[:data]["hasBody"]["@graph"][0]["hasSelector"]).to be_truthy
+      expect(mapped[:data]["hasBody"]["@graph"][0]["http://www.w3.org/ns/oa#hasSelector"]).to be_truthy
       expect(mapped[:data]["hasBody"]["@graph"][1]["@id"]).to eq("test#bond-1-1")
       expect(mapped[:data]["hasBody"]["@graph"][1]["@type"]).to eq("snap:FatherOf")
       expect(mapped[:data]["hasBody"]["@graph"][1]["http://lawd.info/ontology/hasAttestation"]).to be_truthy

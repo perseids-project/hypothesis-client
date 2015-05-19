@@ -259,10 +259,16 @@ module HypothesisClient::MapperPrototype
           mainnode["@id"] = obj[:targetPerson]
         else
           # if we didn't have a target person, just copy the original target
-          # with its selector into the graph
-          mainnode = oa['hasTarget'].clone
-          mainnode['hasSelector'] = oa['hasTarget']['hasSelector'].clone
+          # with its selector into the graph - we don't want the full oa context
+          # though so use full namespaced properties
           mainnode["@id"] = "#{obj[:id]}#rel-target"
+          mainnode["@type"] = "http://www.w3.org/ns/oa#SpecificResource"
+          mainnode['http://www.w3.org/ns/oa#hasSelector'] = {}
+          mainnode['http://www.w3.org/ns/oa#hasSelector']['@id'] = oa['hasTarget']['hasSelector']['@id']
+          mainnode['http://www.w3.org/ns/oa#hasSelector']['@type'] = 'http://www.w3.org/ns/oa#TextQuoteSelector'
+          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#exact'] = oa['hasTarget']['hasSelector']['exact']
+          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#prefix'] = oa['hasTarget']['hasSelector']['prefix']
+          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#suffix'] = oa['hasTarget']['hasSelector']['suffix']
         end
         bond_uris = []
         bonds = []
@@ -279,11 +285,11 @@ module HypothesisClient::MapperPrototype
                   "@id" => u
                 }
               }
+             attest_uris = []
              if (obj[:attestUri].length > 0) 
-               bond[LAWD_HASATTESTATION] = [];
                obj[:attestUri].each_with_index do |a,j|
                    attest_uri = "#{bond_uri}-attest-#{j+1}"
-                   bond[LAWD_HASATTESTATION] << attest_uri
+                   attest_uris << attest_uri
                    attestations << 
                      {
                        "@id" =>  attest_uri,
@@ -291,14 +297,19 @@ module HypothesisClient::MapperPrototype
                        "http://purl.org/spar/cito/citesAsEvidence" => a
                      }
                end # end iteration on attestation uris
+               if attest_uris.length > 1
+                 bond[LAWD_HASATTESTATION] = attest_uris
+               else
+                 bond[LAWD_HASATTESTATION] = attest_uris[0]
+               end
              end #end test on attestation uris
              bonds << bond
           end #end iteration of bond uris
         end # and iteration of relation terms 
         if bond_uris.length == 1
-          mainnode["snap:bond-with"] = bond_uris[0]
+          mainnode["snap:has-bond"] = bond_uris[0]
         else
-          mainnode["snap:bond-with"] = bond_uris
+          mainnode["snap:has-bond"] = bond_uris
         end
         graph << mainnode
         graph.concat(bonds)
