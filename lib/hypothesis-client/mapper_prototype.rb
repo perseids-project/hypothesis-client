@@ -18,6 +18,7 @@ module HypothesisClient::MapperPrototype
     LAWD_REPRESENTS = "http://lawd.info/ontology/represents"
     LAWD_ATTESTATION = "http://lawd.info/ontology/Attestation"
     LAWD_HASATTESTATION = "http://lawd.info/ontology/hasAttestation"
+    LAWD_HASCITATION = "http://lawd.info/ontology/hasCitation"
         
 
     REL_GRAPH_CONTEXT =  {
@@ -50,7 +51,8 @@ module HypothesisClient::MapperPrototype
           :type =>  a_tag,
           :ontology => HypothesisClient::Helpers::Ontology::SNAP.new,
           :uris =>  {
-            'attestation' => [ HypothesisClient::Helpers::Uris::Perseus ],
+            'attestation' => [ HypothesisClient::Helpers::Uris::Perseus, HypothesisClient::Helpers::Uris::Any ],
+            'attestationof' => [ HypothesisClient::Helpers::Uris::Hypothesis  ],
             'citation' => [ HypothesisClient::Helpers::Uris::Perseus ],
             'place' => [ HypothesisClient::Helpers::Uris::Pleiades ],
             'relation' => [ HypothesisClient::Helpers::Uris::VisibleWords, HypothesisClient::Helpers::Uris::Any ],
@@ -151,24 +153,37 @@ module HypothesisClient::MapperPrototype
       if (response[:errors].length == 0)
         model[:ontology] = @annotation_type[:ontology]
         model[:motivation] ="oa:identifying"
-        model[:targetPerson] = (target_matcher.uris)[0]
-        model[:targetCTS] = (target_matcher.cts)[0]
+        if target_matcher.uris.length > 0
+          model[:targetPerson] = (target_matcher.uris)[0]
+        end
+        if target_matcher.cts.length > 0
+          model[:targetCTS] = (target_matcher.cts)[0]
+        end
         model[:bodyUri] = []
         model[:bodyCts] = []
+        model[:attestUri] = []
         model[:relationTerms] = []
+        # iterate tags to see if we have any relation terms
+        body_tags.keys.each do |k|
+          mapped = model[:ontology].get_term(k)        
+          unless mapped.nil?
+            model[:relationTerms] << mapped
+          end
+        end #end iteration of tags
         model[:bodyUri] = body_matcher.uris
         if (model[:bodyUri].length == 0) 
           response[:errors] << "Unable to parse body uri from #{data["text"]}"
         end
-        if body_tags["relation"] 
+        if body_tags["relation"] || model[:relationTerms].length > 0
           model[:isRelation] = true
-          body_tags.keys.each do |k|
-            mapped = model[:ontology].get_term(k)        
-            unless mapped.nil?
-              model[:relationTerms] << mapped
-            end
-          end #end iteration of tags
-          unless model[:relationTerms].length > 0
+          # if there was any leftover text check to see if it is an attestation
+          if (body_matcher.text =~ /hasAttestation/i)
+            attest_matcher = find_match(@annotation_type,['attestation'],body_matcher.text)
+            model[:attestUri] = body_matcher.uris
+          end
+          # if it was explicitly a relation annotation and we don't
+          # have any terms, report an error
+          if body_tags["relation"] &&  model[:relationTerms].length == 0
             response[:errors] << "No valid relation tag" 
           end
         elsif body_tags["person"] 
@@ -183,6 +198,10 @@ module HypothesisClient::MapperPrototype
           model[:motivation] ="oa:describing"
           model[:bodyText] = body_matcher.text
           model[:bodyCts] = body_matcher.cts
+        elsif body_tags["attestationof"] 
+          model[:attestsTo] = true
+          model[:motivation] ="oa:describing"
+        elsif body_tags["attestationof"] 
         else 
           # otherwise we assume it's a plain link
           model[:motivation] ="oa:linking"
@@ -220,7 +239,6 @@ module HypothesisClient::MapperPrototype
       oa['hasTarget'] = {
         "@id" => "#{obj[:id]}#target-1",
         "@type" => "oa:SpecificResource", 
-        "hasSource" => { '@id' => obj[:targetCTS] },
         "hasSelector" => {
           "@id" => "#{obj[:id]}#target-1-sel-1",
           "@type" => "oa:TextQuoteSelector",
@@ -229,21 +247,31 @@ module HypothesisClient::MapperPrototype
           "suffix" => obj[:targetSelector]["suffix"]
         }
       }
+      if (obj[:targetCTS]) 
+        oa['hasTarget']['hasSource'] = { '@id' => obj[:targetCTS] }
+      end  
       ## THIS TECHNICALLY ISN'T VALID OA to EMBED A JSON-LD named graph without
       ## a graph id  ... fix at some point soon 
       if obj[:isRelation]
         graph = []
+        mainnode = {}
+        if obj[:targetPerson]
+          mainnode["@id"] = obj[:targetPerson]
+        else
+          # if we didn't have a target person, just copy the original target
+          # with its selector into the graph
+          mainnode = oa['hasTarget'].clone
+          mainnode['hasSelector'] = oa['hasTarget']['hasSelector'].clone
+          mainnode["@id"] = "#{obj[:id]}#rel-target"
+        end
+        bond_uris = []
+        bonds = []
+        attestations = []
         obj[:relationTerms].each_with_index do |t,i|
-          bond_uri = "#{obj[:id]}#bond-#{i+1}"
-          graph << 
-              {
-                "@id" =>  obj[:targetPerson],
-                "snap:has-bond" =>  {
-                  "@id" => bond_uri
-                 }
-              }
-          obj[:bodyUri].each do |u|
-	    graph << 
+          obj[:bodyUri].each_with_index do |u,k|
+            bond_uri = "#{obj[:id]}#bond-#{i+1}-#{k+1}"
+            bond_uris << bond_uri
+	    bond =  
               {
                 "@id" => bond_uri,
                 "@type" => t,
@@ -251,8 +279,30 @@ module HypothesisClient::MapperPrototype
                   "@id" => u
                 }
               }
-          end
-        end  
+             if (obj[:attestUri].length > 0) 
+               bond[LAWD_HASATTESTATION] = [];
+               obj[:attestUri].each_with_index do |a,j|
+                   attest_uri = "#{bond_uri}-attest-#{j+1}"
+                   bond[LAWD_HASATTESTATION] << attest_uri
+                   attestations << 
+                     {
+                       "@id" =>  attest_uri,
+                       "@type" => LAWD_ATTESTATION,
+                       "http://purl.org/spar/cito/citesAsEvidence" => a
+                     }
+               end # end iteration on attestation uris
+             end #end test on attestation uris
+             bonds << bond
+          end #end iteration of bond uris
+        end # and iteration of relation terms 
+        if bond_uris.length == 1
+          mainnode["snap:bond-with"] = bond_uris[0]
+        else
+          mainnode["snap:bond-with"] = bond_uris
+        end
+        graph << mainnode
+        graph.concat(bonds)
+        graph.concat(attestations)
         oa['hasBody'] = { 
           "@context" => REL_GRAPH_CONTEXT.merge(obj[:ontology].get_context()),
           "@graph" => graph 
@@ -264,7 +314,8 @@ module HypothesisClient::MapperPrototype
          end
       elsif obj[:isAttestation]
         graph = []
-        obj[:bodyCts].each_with_index do |u,i|
+        attestations = obj[:bodyCts] || obj[:bodyUri]
+        attestations.each_with_index do |u,i|
           attest_uri = "#{obj[:id]}#attest-#{i+1}"
           graph << 
             {
@@ -278,8 +329,39 @@ module HypothesisClient::MapperPrototype
               "http://purl.org/spar/cito/citesAsEvidence" => u['uri'],
               "cnt:chars" => obj[:bodyText]
             }
-          graph << make_citation_graph(u)
+          if obj[:bodyCts]
+            graph << make_citation_graph(u)
+          end
         end
+        oa['hasBody'] = { 
+          "@context" => REL_GRAPH_CONTEXT.merge(obj[:ontology].get_context()),
+          "@graph" => graph 
+        }
+      elsif obj[:attestsTo]
+        graph = []
+        cite_uri = "#{obj[:id]}#cite-1"
+        obj[:bodyUri].each_with_index do |u,i|
+          attest_uri = "#{obj[:id]}#attest-#{i+1}"
+          cite_uri = 
+          graph << 
+            {
+              "@id" =>  u,
+              LAWD_HASATTESTATION => attest_uri
+            }
+          graph << 
+            {
+              "@id" =>  attest_uri,
+              "@type" => [LAWD_ATTESTATION],
+               LAWD_HASCITATION => cite_uri,
+              "http://purl.org/spar/cito/citesAsEvidence" => obj[:targetUri]
+            }
+        end
+        graph << 
+          {
+            "@id" => cite_uri,
+            "@type" => "cnt:ContentAsText",
+            "cnt:chars" => obj[:targetSelector]['exact']
+          }
         oa['hasBody'] = { 
           "@context" => REL_GRAPH_CONTEXT.merge(obj[:ontology].get_context()),
           "@graph" => graph 
@@ -334,6 +416,11 @@ module HypothesisClient::MapperPrototype
       else  
         motivation_text = 'identifies'
       end
+      if obj[:targetCTS]
+         target_text = obj[:targetCTS]
+      else
+         target_text = obj[:targetUri]
+      end
       as_text = ""
       if (obj[:relationTerms].length > 0)
         as_text = " as #{obj[:relationTerms].join(", ")}" 
@@ -346,7 +433,7 @@ module HypothesisClient::MapperPrototype
       elsif obj[:isAttestation] 
         as_text = " with an attestation of #{obj[:bodyText]}"
       end  
-      "#{obj[:bodyUri].join(", ")} #{motivation_text} #{obj[:targetSelector]['exact']}#{as_text} in #{obj[:targetCTS]}"
+      "#{obj[:bodyUri].join(", ")} #{motivation_text} #{obj[:targetSelector]['exact']}#{as_text} in #{target_text}"
     end
 
   end #end JOTH class

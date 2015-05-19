@@ -73,9 +73,10 @@ describe HypothesisClient::MapperPrototype do
       expect(mapped[:data]["hasBody"]["@graph"]).to be_truthy
       expect(mapped[:data]["hasBody"]["@graph"][0]).to be_truthy
       expect(mapped[:data]["hasBody"]["@graph"][0]["@id"]).to eq("http://data.perseus.org/people/smith:clytaemnestra-1#this")
-      expect(mapped[:data]["hasBody"]["@graph"][1]["@id"]).to eq("test#bond-1")
-      expect(mapped[:data]["hasBody"]["@graph"][3]["@id"]).to eq("test#bond-2")
-      expect(mapped[:data]["hasBody"]["@graph"][3]["snap:bond-with"]["@id"]).to eq("http://data.perseus.org/people/smith:castor-1#this")
+      expect(mapped[:data]["hasBody"]["@graph"][1]["@id"]).to eq("test#bond-1-1")
+      expect(mapped[:data]["hasBody"]["@graph"][2]["@id"]).to eq("test#bond-2-1")
+      expect(mapped[:data]["hasBody"]["@graph"][2]["@id"]).to eq("test#bond-2-1")
+      expect(mapped[:data]["hasBody"]["@graph"][2]["snap:bond-with"]["@id"]).to eq("http://data.perseus.org/people/smith:castor-1#this")
     end
   end
   context "relation 2 test" do 
@@ -92,10 +93,9 @@ describe HypothesisClient::MapperPrototype do
       expect(mapped[:data]["hasBody"]["@graph"]).to be_truthy
       expect(mapped[:data]["hasBody"]["@graph"][0]).to be_truthy
       expect(mapped[:data]["hasBody"]["@graph"][0]["@id"]).to eq("http://data.perseus.org/people/smith:clytaemnestra-1#this")
-      expect(mapped[:data]["hasBody"]["@graph"][1]["@id"]).to eq("test#bond-1")
-      expect(mapped[:data]["hasBody"]["@graph"][3]["@id"]).to eq("test#bond-2")
-      expect(mapped[:data]["hasBody"]["@graph"][5]["@id"]).to eq("test#bond-3")
-      expect(mapped[:data]["hasBody"]["@graph"][5]["snap:bond-with"]["@id"]).to eq("http://data.perseus.org/people/smith:castor-1#this")
+      expect(mapped[:data]["hasBody"]["@graph"][1]["@id"]).to eq("test#bond-1-1")
+      expect(mapped[:data]["hasBody"]["@graph"][3]["@id"]).to eq("test#bond-3-1")
+      expect(mapped[:data]["hasBody"]["@graph"][3]["snap:bond-with"]["@id"]).to eq("http://data.perseus.org/people/smith:castor-1#this")
     end
   end
   context "attestation test" do 
@@ -177,6 +177,37 @@ describe HypothesisClient::MapperPrototype do
       expect(mapped[:data]["hasBody"]["@graph"][0]["@id"]).to eq("http://data.perseus.org/people/smith:clytaemnestra-1#this")
     end
   end
+
+  context "attestation of annotation" do 
+    input = File.read(File.join(File.dirname(__FILE__), 'support', 'attest3.json')) 
+    let(:mapped) { client.map("test",JSON.parse(input))}
+
+    it 'graphed the attestation' do
+      expect(mapped[:data]["motivatedBy"]).to eq("oa:describing")
+      expect(mapped[:data]["hasBody"]).to be_truthy
+      expect(mapped[:data]["hasBody"]["@graph"]).to be_truthy
+      expect(mapped[:data]["hasBody"]["@graph"][0]["@id"]).to eq("https://hypothes.is/a/jtsBhicGR_mEoN1tu8I8hw")
+    end
+  end
+
+  context "relation and attestation" do 
+    input = File.read(File.join(File.dirname(__FILE__), 'support', 'attest4.json')) 
+    let(:mapped) { client.map("test",JSON.parse(input))}
+
+    it 'graphed the attestation' do
+      expect(mapped[:data]["motivatedBy"]).to eq("oa:identifying")
+      expect(mapped[:data]["hasBody"]).to be_truthy
+      expect(mapped[:data]["hasBody"]["@graph"]).to be_truthy
+      expect(mapped[:data]["hasBody"]["@graph"][0]["@id"]).to eq("test#rel-target")
+      expect(mapped[:data]["hasBody"]["@graph"][0]["hasSelector"]).to be_truthy
+      expect(mapped[:data]["hasBody"]["@graph"][1]["@id"]).to eq("test#bond-1-1")
+      expect(mapped[:data]["hasBody"]["@graph"][1]["@type"]).to eq("snap:FatherOf")
+      expect(mapped[:data]["hasBody"]["@graph"][1]["http://lawd.info/ontology/hasAttestation"]).to be_truthy
+      expect(mapped[:data]["hasBody"]["@graph"][1]["snap:bond-with"]["@id"]).to eq("http://data.perseus.org/people/visiblewords:johndoe_1#this")
+      expect(mapped[:data]["hasBody"]["@graph"][2]["@type"]).to eq("http://lawd.info/ontology/Attestation")
+    end
+  end
+
   context "basic visiblewords test" do 
     input = File.read(File.join(File.dirname(__FILE__), 'support', 'person1.json')) 
     let(:mapped) { client.map("test",JSON.parse(input))}
