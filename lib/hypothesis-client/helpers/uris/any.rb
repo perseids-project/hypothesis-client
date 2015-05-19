@@ -9,12 +9,17 @@ module HypothesisClient
           @content = a_content
           @can_match = false 
           @uris = []
-          @text = nil
+          @text = "#{@content}"
           @cts = nil
           @error = nil
           @content.scan(URI.regexp) do |*matches|
             @can_match = true
-            @uris << $&
+            u = $&
+            @uris << u
+            # keep any text that isn't part of the uris
+            @text.sub!(u,'')
+            @text.sub!(/^\n/,'')
+            @text.sub!(/\n$/,'')
           end
         end
       end
