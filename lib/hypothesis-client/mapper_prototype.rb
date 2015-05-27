@@ -143,6 +143,21 @@ module HypothesisClient::MapperPrototype
       elsif (target_matcher.error)
         response[:errors] << target_matcher.error
       end
+
+      model[:ontology] = @annotation_type[:ontology]
+      model[:relationTerms] = []
+        # iterate tags to see if we have any relation terms
+      body_tags.keys.each do |k|
+        mapped = model[:ontology].get_term(k)        
+        unless mapped.nil?
+          model[:relationTerms] << mapped
+        end
+      end 
+      if model[:relationTerms].length >0 && ! body_tags["relation"]
+        # if a relationTerm was supplied by not the relation tag 
+        # then assume its a relation body type
+        body_tags["relation"] = 1
+      end
       body_matcher = find_match(@annotation_type,body_tags.keys,data["text"])
       if (body_matcher.nil?)
         response[:errors] << "Unknown body type #{data["text"]} #{body_tags.keys.inspect}"
@@ -152,7 +167,6 @@ module HypothesisClient::MapperPrototype
 
       # only continue if we are error free
       if (response[:errors].length == 0)
-        model[:ontology] = @annotation_type[:ontology]
         model[:motivation] ="oa:identifying"
         if target_matcher.uris.length > 0
           model[:targetPerson] = (target_matcher.uris)[0]
@@ -163,14 +177,6 @@ module HypothesisClient::MapperPrototype
         model[:bodyUri] = []
         model[:bodyCts] = []
         model[:attestUri] = []
-        model[:relationTerms] = []
-        # iterate tags to see if we have any relation terms
-        body_tags.keys.each do |k|
-          mapped = model[:ontology].get_term(k)        
-          unless mapped.nil?
-            model[:relationTerms] << mapped
-          end
-        end #end iteration of tags
         model[:bodyUri] = body_matcher.uris
         if (model[:bodyUri].length == 0) 
           response[:errors] << "Unable to parse body uri from #{data["text"]}"
