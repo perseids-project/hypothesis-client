@@ -53,6 +53,7 @@ module HypothesisClient::MapperPrototype
           :uris =>  {
             'attestation' => [ HypothesisClient::Helpers::Uris::Perseus, HypothesisClient::Helpers::Uris::Any ],
             'attestationof' => [ HypothesisClient::Helpers::Uris::Hypothesis  ],
+            'hasattestation' => [ HypothesisClient::Helpers::Uris::Hypothesis  ], # this should only have been attestationof
             'citation' => [ HypothesisClient::Helpers::Uris::Perseus ],
             'place' => [ HypothesisClient::Helpers::Uris::Pleiades ],
             'relation' => [ HypothesisClient::Helpers::Uris::VisibleWords, HypothesisClient::Helpers::Uris::Any ],
@@ -198,10 +199,9 @@ module HypothesisClient::MapperPrototype
           model[:motivation] ="oa:describing"
           model[:bodyText] = body_matcher.text
           model[:bodyCts] = body_matcher.cts
-        elsif body_tags["attestationof"] 
+        elsif body_tags["attestationof"] || body_tags["hasattestation"]
           model[:attestsTo] = true
           model[:motivation] ="oa:describing"
-        elsif body_tags["attestationof"] 
         else 
           # otherwise we assume it's a plain link
           model[:motivation] ="oa:linking"
@@ -353,7 +353,6 @@ module HypothesisClient::MapperPrototype
         cite_uri = "#{obj[:id]}#cite-1"
         obj[:bodyUri].each_with_index do |u,i|
           attest_uri = "#{obj[:id]}#attest-#{i+1}"
-          cite_uri = 
           graph << 
             {
               "@id" =>  u,
@@ -362,7 +361,7 @@ module HypothesisClient::MapperPrototype
           graph << 
             {
               "@id" =>  attest_uri,
-              "@type" => [LAWD_ATTESTATION],
+              "@type" => LAWD_ATTESTATION,
                LAWD_HASCITATION => cite_uri,
               "http://purl.org/spar/cito/citesAsEvidence" => obj[:targetUri]
             }
@@ -370,7 +369,7 @@ module HypothesisClient::MapperPrototype
         graph << 
           {
             "@id" => cite_uri,
-            "@type" => "cnt:ContentAsText",
+            "@type" => [LAWD_CITATION,"cnt:ContentAsText"],
             "cnt:chars" => obj[:targetSelector]['exact']
           }
         oa['hasBody'] = { 
