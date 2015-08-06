@@ -27,7 +27,7 @@ module HypothesisClient
         response = http.send_request('GET',uri.request_uri,nil,headers)
         if (response.code == '200') 
           respobj = { }
-          orig_annot = JSON.parse(response.body)
+          orig_annot = JSON.parse(response.body).force_encoding("UTF-8")
           orig_annot[:sourceUri] = uri.to_s
           new_id = a_id.nil? ? a_uri : a_id
           mapped = map(new_id,orig_annot,a_owner)
