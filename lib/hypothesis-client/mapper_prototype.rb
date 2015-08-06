@@ -248,9 +248,9 @@ module HypothesisClient::MapperPrototype
         "hasSelector" => {
           "@id" => "#{obj[:id]}#target-1-sel-1",
           "@type" => "oa:TextQuoteSelector",
-          "exact" => obj[:targetSelector]["exact"],
-          "prefix" => obj[:targetSelector]["prefix"],
-          "suffix" => obj[:targetSelector]["suffix"]
+          "exact" => obj[:targetSelector]["exact"].force_encoding("UTF-8"),
+          "prefix" => obj[:targetSelector]["prefix"].force_encoding("UTF-8"),
+          "suffix" => obj[:targetSelector]["suffix"].force_encoding("UTF-8")
         }
       }
       if (obj[:targetCTS]) 
@@ -274,9 +274,9 @@ module HypothesisClient::MapperPrototype
           mainnode['http://www.w3.org/ns/oa#hasSelector'] = {}
           mainnode['http://www.w3.org/ns/oa#hasSelector']['@id'] = oa['hasTarget']['hasSelector']['@id']
           mainnode['http://www.w3.org/ns/oa#hasSelector']['@type'] = 'http://www.w3.org/ns/oa#TextQuoteSelector'
-          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#exact'] = oa['hasTarget']['hasSelector']['exact']
-          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#prefix'] = oa['hasTarget']['hasSelector']['prefix']
-          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#suffix'] = oa['hasTarget']['hasSelector']['suffix']
+          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#exact'] = oa['hasTarget']['hasSelector']['exact'].force_encoding("UTF-8")
+          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#prefix'] = oa['hasTarget']['hasSelector']['prefix'].force_encoding("UTF-8")
+          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#suffix'] = oa['hasTarget']['hasSelector']['suffix'].force_encoding("UTF-8")
           if (obj[:targetCTS]) 
             mainnode['hasSource'] = { '@id' => obj[:targetCTS] }
           else 
@@ -382,7 +382,7 @@ module HypothesisClient::MapperPrototype
           {
             "@id" => cite_uri,
             "@type" => [LAWD_CITATION,"cnt:ContentAsText"],
-            "cnt:chars" => obj[:targetSelector]['exact']
+            "cnt:chars" => obj[:targetSelector]['exact'].force_encoding("UTF-8")
           }
         oa['hasBody'] = { 
           "@context" => REL_GRAPH_CONTEXT.merge(obj[:ontology].get_context()),
@@ -455,7 +455,7 @@ module HypothesisClient::MapperPrototype
       elsif obj[:isAttestation] 
         as_text = " with an attestation of #{obj[:bodyText]}"
       end  
-      "#{obj[:bodyUri].join(", ")} #{motivation_text} #{obj[:targetSelector]['exact']}#{as_text} in #{target_text}"
+      "#{obj[:bodyUri].join(", ")} #{motivation_text} #{obj[:targetSelector]['exact'].force_encoding("UTF-8")}#{as_text} in #{target_text}"
     end
 
   end #end JOTH class
