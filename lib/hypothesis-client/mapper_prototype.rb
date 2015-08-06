@@ -1,3 +1,4 @@
+#encoding utf-8
 #s a prototype of a mapper module which takes
 # a Hypothes.is annotation which adheres to a pre-defined
 # set of rules for tagging and contents and represents this
@@ -96,6 +97,9 @@ module HypothesisClient::MapperPrototype
       response = {} 
       response[:errors] = []
       model = {}
+      # todo should fail but backwards compatibility for now
+      annotation_type = get_annotation_type('joth')
+
       # first some general parsing to pick the pieces we want from
       # the hypothes.is data object
       begin
@@ -112,7 +116,7 @@ module HypothesisClient::MapperPrototype
             # also make sure we have lower case
             s.downcase!
             if is_annotation_type?(s)
-              @annotation_type = get_annotation_type(s)
+              annotation_type = get_annotation_type(s)
             else 
               body_tags[s] = 1
             end
@@ -133,18 +137,14 @@ module HypothesisClient::MapperPrototype
         response[:errors] << e.to_s
       end # end begin on parsing data
 
-      if @annotation_type.nil?
-        # todo should fail but backwards compatibility for now
-        @annotation_type = get_annotation_type('joth')
-      end
-      target_matcher = find_match(@annotation_type,['target'],data["uri"])
+      target_matcher = find_match(annotation_type,['target'],data["uri"])
       if (target_matcher.nil?)
         response[:errors] << "Unknown target type #{data["uri"]}"
       elsif (target_matcher.error)
         response[:errors] << target_matcher.error
       end
 
-      model[:ontology] = @annotation_type[:ontology]
+      model[:ontology] = annotation_type[:ontology]
       model[:relationTerms] = []
         # iterate tags to see if we have any relation terms
       body_tags.keys.each do |k|
@@ -158,7 +158,7 @@ module HypothesisClient::MapperPrototype
         # then assume its a relation body type
         body_tags["relation"] = 1
       end
-      body_matcher = find_match(@annotation_type,body_tags.keys,data["text"])
+      body_matcher = find_match(annotation_type,body_tags.keys,data["text"])
       if (body_matcher.nil?)
         response[:errors] << "Unknown body type #{data["text"]} #{body_tags.keys.inspect}"
       elsif (body_matcher.error)
@@ -185,7 +185,7 @@ module HypothesisClient::MapperPrototype
           model[:isRelation] = true
           # if there was any leftover text check to see if it is an attestation
           if (body_matcher.text =~ /hasAttestation/i)
-            attest_matcher = find_match(@annotation_type,['attestation'],body_matcher.text)
+            attest_matcher = find_match(annotation_type,['attestation'],body_matcher.text)
             model[:attestUri] = attest_matcher.uris
           end
           # if it was explicitly a relation annotation and we don't
