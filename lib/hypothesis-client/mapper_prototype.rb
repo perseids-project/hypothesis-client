@@ -1,4 +1,5 @@
-# a prototype of a mapper module which takes
+#encoding utf-8
+#s a prototype of a mapper module which takes
 # a Hypothes.is annotation which adheres to a pre-defined
 # set of rules for tagging and contents and represents this
 # as an OA Annotation (JSON-LD serialization) using the 
@@ -96,6 +97,9 @@ module HypothesisClient::MapperPrototype
       response = {} 
       response[:errors] = []
       model = {}
+      # todo should fail but backwards compatibility for now
+      annotation_type = get_annotation_type('joth')
+
       # first some general parsing to pick the pieces we want from
       # the hypothes.is data object
       begin
@@ -112,7 +116,7 @@ module HypothesisClient::MapperPrototype
             # also make sure we have lower case
             s.downcase!
             if is_annotation_type?(s)
-              @annotation_type = get_annotation_type(s)
+              annotation_type = get_annotation_type(s)
             else 
               body_tags[s] = 1
             end
@@ -133,18 +137,14 @@ module HypothesisClient::MapperPrototype
         response[:errors] << e.to_s
       end # end begin on parsing data
 
-      if @annotation_type.nil?
-        # todo should fail but backwards compatibility for now
-        @annotation_type = get_annotation_type('joth')
-      end
-      target_matcher = find_match(@annotation_type,['target'],data["uri"])
+      target_matcher = find_match(annotation_type,['target'],data["uri"])
       if (target_matcher.nil?)
         response[:errors] << "Unknown target type #{data["uri"]}"
       elsif (target_matcher.error)
         response[:errors] << target_matcher.error
       end
 
-      model[:ontology] = @annotation_type[:ontology]
+      model[:ontology] = annotation_type[:ontology]
       model[:relationTerms] = []
         # iterate tags to see if we have any relation terms
       body_tags.keys.each do |k|
@@ -158,7 +158,7 @@ module HypothesisClient::MapperPrototype
         # then assume its a relation body type
         body_tags["relation"] = 1
       end
-      body_matcher = find_match(@annotation_type,body_tags.keys,data["text"])
+      body_matcher = find_match(annotation_type,body_tags.keys,data["text"])
       if (body_matcher.nil?)
         response[:errors] << "Unknown body type #{data["text"]} #{body_tags.keys.inspect}"
       elsif (body_matcher.error)
@@ -185,7 +185,7 @@ module HypothesisClient::MapperPrototype
           model[:isRelation] = true
           # if there was any leftover text check to see if it is an attestation
           if (body_matcher.text =~ /hasAttestation/i)
-            attest_matcher = find_match(@annotation_type,['attestation'],body_matcher.text)
+            attest_matcher = find_match(annotation_type,['attestation'],body_matcher.text)
             model[:attestUri] = attest_matcher.uris
           end
           # if it was explicitly a relation annotation and we don't
@@ -248,13 +248,15 @@ module HypothesisClient::MapperPrototype
         "hasSelector" => {
           "@id" => "#{obj[:id]}#target-1-sel-1",
           "@type" => "oa:TextQuoteSelector",
-          "exact" => obj[:targetSelector]["exact"],
-          "prefix" => obj[:targetSelector]["prefix"],
-          "suffix" => obj[:targetSelector]["suffix"]
+          "exact" => obj[:targetSelector]["exact"].force_encoding("UTF-8"),
+          "prefix" => obj[:targetSelector]["prefix"].force_encoding("UTF-8"),
+          "suffix" => obj[:targetSelector]["suffix"].force_encoding("UTF-8")
         }
       }
       if (obj[:targetCTS]) 
         oa['hasTarget']['hasSource'] = { '@id' => obj[:targetCTS] }
+      else 
+        oa['hasTarget']['hasSource'] = { '@id' => obj[:targetUri] }
       end  
       ## THIS TECHNICALLY ISN'T VALID OA to EMBED A JSON-LD named graph without
       ## a graph id  ... fix at some point soon 
@@ -272,24 +274,30 @@ module HypothesisClient::MapperPrototype
           mainnode['http://www.w3.org/ns/oa#hasSelector'] = {}
           mainnode['http://www.w3.org/ns/oa#hasSelector']['@id'] = oa['hasTarget']['hasSelector']['@id']
           mainnode['http://www.w3.org/ns/oa#hasSelector']['@type'] = 'http://www.w3.org/ns/oa#TextQuoteSelector'
-          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#exact'] = oa['hasTarget']['hasSelector']['exact']
-          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#prefix'] = oa['hasTarget']['hasSelector']['prefix']
-          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#suffix'] = oa['hasTarget']['hasSelector']['suffix']
+          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#exact'] = oa['hasTarget']['hasSelector']['exact'].force_encoding("UTF-8")
+          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#prefix'] = oa['hasTarget']['hasSelector']['prefix'].force_encoding("UTF-8")
+          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#suffix'] = oa['hasTarget']['hasSelector']['suffix'].force_encoding("UTF-8")
+          if (obj[:targetCTS]) 
+            mainnode['hasSource'] = { '@id' => obj[:targetCTS] }
+          else 
+            mainnode['hasSource'] = { '@id' => obj[:targetUri] }
+          end  
         end
-        bond_uris = []
+        bond_uris = Hash.new
         bonds = []
         attestations = []
         obj[:relationTerms].each_with_index do |t,i|
           obj[:bodyUri].each_with_index do |u,k|
             bond_uri = "#{obj[:id]}#bond-#{i+1}-#{k+1}"
-            bond_uris << bond_uri
+            unless bond_uris[u]
+              bond_uris[u] = []
+            end
+            bond_uris[u] << bond_uri
 	    bond =  
               {
                 "@id" => bond_uri,
                 "@type" => t,
-                "snap:bond-with" => {
-                  "@id" => u
-                }
+                "snap:bond-with" => { "@id" => mainnode["@id"] }
               }
              attest_uris = []
              if (obj[:attestUri].length > 0) 
@@ -312,12 +320,10 @@ module HypothesisClient::MapperPrototype
              bonds << bond
           end #end iteration of bond uris
         end # and iteration of relation terms 
-        if bond_uris.length == 1
-          mainnode["snap:has-bond"] = bond_uris[0]
-        else
-          mainnode["snap:has-bond"] = bond_uris
-        end
         graph << mainnode
+        bond_uris.keys.each do |u|
+           graph << { "@id" => u, "snap:has-bond" => bond_uris[u] }
+        end
         graph.concat(bonds)
         graph.concat(attestations)
         oa['hasBody'] = { 
@@ -376,7 +382,7 @@ module HypothesisClient::MapperPrototype
           {
             "@id" => cite_uri,
             "@type" => [LAWD_CITATION,"cnt:ContentAsText"],
-            "cnt:chars" => obj[:targetSelector]['exact']
+            "cnt:chars" => obj[:targetSelector]['exact'].force_encoding("UTF-8")
           }
         oa['hasBody'] = { 
           "@context" => REL_GRAPH_CONTEXT.merge(obj[:ontology].get_context()),
@@ -449,7 +455,7 @@ module HypothesisClient::MapperPrototype
       elsif obj[:isAttestation] 
         as_text = " with an attestation of #{obj[:bodyText]}"
       end  
-      "#{obj[:bodyUri].join(", ")} #{motivation_text} #{obj[:targetSelector]['exact']}#{as_text} in #{target_text}"
+      "#{obj[:bodyUri].join(", ")} #{motivation_text} #{obj[:targetSelector]['exact'].force_encoding("UTF-8")}#{as_text} in #{target_text}"
     end
 
   end #end JOTH class
