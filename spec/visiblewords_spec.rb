@@ -23,4 +23,5 @@ describe HypothesisClient::Helpers::Uris::VisibleWords do
     end
 
   end
+
 end

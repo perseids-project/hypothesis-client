@@ -1,0 +1,34 @@
+{
+    "updated": "2015-08-26T15:26:24.026985+00:00", "target":[ {
+        "source": "http://sosol.perseids.org/sosol/publications/12050/epi_cts_identifiers/15792/preview", "pos": {
+            "top": 997.8000030517578, "height": 18
+        },
+        "selector":[ {
+            "endContainer": "/div[2]/div[1]/div[4]/div[2]/form[1]/div[2]/div[1]/div[1]/div[8]", "endOffset": 36, "type": "RangeSelector", "startOffset": 25, "startContainer": "/div[2]/div[1]/div[4]/div[2]/form[1]/div[2]/div[1]/div[1]/div[8]"
+        },
+        {
+            "exact": "\u1f28\u03b3\u03b5\u03ba\u03c1\u03ac\u03c4\u03b5\u03c5\u03c2", "type": "TextQuoteSelector"
+        },
+        {
+            "type": "FragmentSelector", "value": ""
+        }]
+    }], "tags":[ "person", "visiblewords"], "text": "http://www.lgpn.ox.ac.uk/id/V1-38064", "created": "2015-05-19T07:40:21.264733+00:00", "uri": "http://sosol.perseids.org/sosol/publications/12050/epi_cts_identifiers/15792/preview", "user": "acct:hoai.kelly@hypothes.is", "document": {
+        "eprints": {
+        },
+        "title": "\nPerseids Prototype: epi_cts_identifiers - preview\n", "twitter": {
+        },
+        "dc": {
+        },
+        "prism": {
+        },
+        "highwire": {
+        },
+        "link":[ {
+            "href": "http://sosol.perseids.org/sosol/publications/12050/epi_cts_identifiers/15792/preview"
+        }], "facebook": {
+        }
+    },
+    "consumer": "00000000-0000-0000-0000-000000000000", "id": "_a7JnPWHTFqQptcdqBHGWQ", "permissions": {
+        "admin":[ "acct:hoai.kelly@hypothes.is"], "read":[ "group:__world__"], "update":[ "acct:hoai.kelly@hypothes.is"], "delete":[ "acct:hoai.kelly@hypothes.is"]
+    }
+}

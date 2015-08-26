@@ -279,4 +279,14 @@ describe HypothesisClient::MapperPrototype do
       expect(mapped[:data]["hasBody"]["@graph"][2]["cnt:chars"]).to eq("\u03a4\u03b7\u03bb\u03ad\u03bc\u03b1\u03c7\u03bf\u03c2 \u03a0\u03b9\u03b8\u03ae\u03ba\u03bf\u03c5")
     end
   end
+
+  context "missing prefix/suffix" do 
+    input = File.read(File.join(File.dirname(__FILE__), 'support', 'onlyexact.json'))
+    let(:mapped) { client.map("test",JSON.parse(input))}
+
+    it 'produced oa' do
+      expect(mapped[:errors]).to match_array([])
+      expect(mapped[:data]).to be_truthy
+    end
+  end
 end
