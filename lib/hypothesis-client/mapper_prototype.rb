@@ -62,6 +62,19 @@ module HypothesisClient::MapperPrototype
             'target' => [ HypothesisClient::Helpers::Uris::Perseids ]
           }
         } 
+      elsif (a_tag == 'psn')
+        type = { 
+          :type =>  a_tag,
+          :ontology => HypothesisClient::Helpers::Ontology::SNAP.new,
+          :uris =>  {
+            'attestationof' => [ HypothesisClient::Helpers::Uris::Perseus, HypothesisClient::Helpers::Uris::Any ],
+            'characterizationof' => [ HypothesisClient::Helpers::Uris::Perseus, HypothesisClient::Helpers::Text::Any ],
+            'place' => [ HypothesisClient::Helpers::Uris::Pleiades ],
+            'relation' => [ HypothesisClient::Helpers::Text::SNAP ],
+            'person' => [ HypothesisClient::Helpers::Uris::Smith, HypothesisClient::Helpers::Uris::Any ],
+            'target' => [ HypothesisClient::Helpers::Uris::SmithText, HypothesClient::Helpers::Uris::SmithStableHTML ]
+          }
+        } 
       end
       return type
     end
@@ -154,7 +167,7 @@ module HypothesisClient::MapperPrototype
         end
       end 
       if model[:relationTerms].length >0 && ! body_tags["relation"]
-        # if a relationTerm was supplied by not the relation tag 
+        # if a relationTerm was supplied but not the relation tag 
         # then assume its a relation body type
         body_tags["relation"] = 1
       end
@@ -163,6 +176,11 @@ module HypothesisClient::MapperPrototype
         response[:errors] << "Unknown body type #{data["text"]} #{body_tags.keys.inspect}"
       elsif (body_matcher.error)
         response[:errors] << body_matcher.error
+      end
+
+      # if a relationterm was instead supplied in the body, use it
+      if model[:relationTerms].length == 0 && body_tags["relation"] && body_matcher.relation_terms
+        model[:relationTerms] << body_matcher.relation_terms
       end
 
       # only continue if we are error free
@@ -200,14 +218,21 @@ module HypothesisClient::MapperPrototype
         elsif body_tags["citation"]
           model[:isCitation] = true
           model[:bodyCts] = body_matcher.cts
-        elsif body_tags["attestation"] 
+        elsif body_tags["attestation"]
           model[:isAttestation] = true
           model[:motivation] ="oa:describing"
           model[:bodyText] = body_matcher.text
           model[:bodyCts] = body_matcher.cts
         elsif body_tags["attestationof"] || body_tags["hasattestation"]
           model[:attestsTo] = true
+          model[:motivation] ="oa:linking"
+          model[:bodyCts] = body_matcher.cts
+        elsif body_tags["characterizationof"]
           model[:motivation] ="oa:describing"
+          model[:bodyText] = body_matcher.text
+          model[:bodyCts] = body_matcher.cts
+          model[:bodyTrans] = body_matcher.translation
+          model[:bodyTransLang] = body_matcher.translation_lang
         else 
           # otherwise we assume it's a plain link
           model[:motivation] ="oa:linking"
@@ -360,7 +385,39 @@ module HypothesisClient::MapperPrototype
           "@context" => REL_GRAPH_CONTEXT.merge(obj[:ontology].get_context()),
           "@graph" => graph 
         }
+      elsif obj[:characterizationOf]
+        # cited text from the supplied CTS URN (and its corresponding translation)
+        # provides a characterization of the person named in the target selector
+        # the original body contained the CTS URN of the cited text as well as the
+        # cited text and its translation
+        oa['hasBody'] =  [ 
+          {
+            "@id" => "#{obj[:id]}#body-1",
+            "@type" => "oa:SpecificResource", 
+            'hasSource'] = obj[:bodyCts]
+            "hasSelector" => {
+              "@id" => "#{obj[:id]}#body-1-sel-1",
+              "@type" => "oa:TextQuoteSelector",
+              "exact" => obj[:bodyText].force_encoding("UTF-8")
+            }
+          },
+          {
+            "@id" => "#{obj[:id]}#body-2",
+            "@type" => "cnt:ContentAsText",
+            "cnt:chars" => obj[:bodyTrans],
+            "dc:language" => obj[:bodyTransLang] 
+             # TODO need lang here
+          }
+        ]
       elsif obj[:attestsTo]
+        # the body of this annotation is a graph which 
+        # identifies a bibliographic citation as an attestation
+        # ideally this would be linked to the relationship bond which
+        # has the citation as an attestation but we don't have access
+        # to the identifier of that bond, created from another annotation
+        # we just have the URI for the original annotation which contains
+        # the bond as its body so our graph will link the annotation and
+        # the attestation
         graph = []
         cite_uri = "#{obj[:id]}#cite-1"
         obj[:bodyUri].each_with_index do |u,i|
@@ -373,17 +430,11 @@ module HypothesisClient::MapperPrototype
           graph << 
             {
               "@id" =>  attest_uri,
-              "@type" => LAWD_ATTESTATION,
-               LAWD_HASCITATION => cite_uri,
-              "http://purl.org/spar/cito/citesAsEvidence" => obj[:targetUri]
+              "@type" => LAWD_ATTESTATION
+              "http://purl.org/spar/cito/citesAsEvidence" => obj[:bodyCts]
             }
         end
-        graph << 
-          {
-            "@id" => cite_uri,
-            "@type" => [LAWD_CITATION,"cnt:ContentAsText"],
-            "cnt:chars" => (obj[:targetSelector]['exact'] || '').force_encoding("UTF-8")
-          }
+        graph << make_citation_graph(obj[:bodyCts))
         oa['hasBody'] = { 
           "@context" => REL_GRAPH_CONTEXT.merge(obj[:ontology].get_context()),
           "@graph" => graph 
