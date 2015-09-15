@@ -30,7 +30,7 @@ module HypothesisClient::MapperPrototype
     # and wiring the up to the appropriate helpers should all be 
     # moved to a configurable manager class
     def is_annotation_type?(a_tag)
-        a_tag == 'joth' || a_tag == 'visiblewords'
+        a_tag == 'joth' || a_tag == 'visiblewords'|| a_tag == 'psn'
     end
 
     def get_annotation_type(a_tag)
@@ -67,8 +67,8 @@ module HypothesisClient::MapperPrototype
           :type =>  a_tag,
           :ontology => HypothesisClient::Helpers::Ontology::SNAP.new,
           :uris =>  {
-            'attestationof' => [ HypothesisClient::Helpers::Uris::Perseus, HypothesisClient::Helpers::Uris::Any ],
-            'characterizationof' => [ HypothesisClient::Helpers::Uris::Perseus, HypothesisClient::Helpers::Text::Any ],
+            'attestationof' => [ HypothesisClient::Helpers::Uris::PerseusAndHypothesis  ],
+            'characterizationof' => [ HypothesisClient::Helpers::Uris::Perseus ],
             'place' => [ HypothesisClient::Helpers::Uris::Pleiades ],
             'relation' => [ HypothesisClient::Helpers::Text::SNAP ],
             'person' => [ HypothesisClient::Helpers::Uris::Smith, HypothesisClient::Helpers::Uris::Any ],
@@ -79,7 +79,7 @@ module HypothesisClient::MapperPrototype
       return type
     end
 
-    def find_match(a_type,a_tags,a_content)
+    def find_match(a_type,a_tags,a_content,a_target=nil)
       # iterate through the tags looking for the matchers
       # for this type and tag
       match_result = nil
@@ -89,7 +89,7 @@ module HypothesisClient::MapperPrototype
           # iterate through the matchers until we get a result
           # or else fall through to the end
           matchers.each do |m| 
-            match_result = m.new(a_content)
+            match_result = m.new(a_content,a_target)
             if match_result.can_match
               break;
             end 
@@ -171,7 +171,7 @@ module HypothesisClient::MapperPrototype
         # then assume its a relation body type
         body_tags["relation"] = 1
       end
-      body_matcher = find_match(annotation_type,body_tags.keys,data["text"])
+      body_matcher = find_match(annotation_type,body_tags.keys,data["text"],target_matcher)
       if (body_matcher.nil?)
         response[:errors] << "Unknown body type #{data["text"]} #{body_tags.keys.inspect}"
       elsif (body_matcher.error)
@@ -196,8 +196,8 @@ module HypothesisClient::MapperPrototype
         model[:bodyCts] = []
         model[:attestUri] = []
         model[:bodyUri] = body_matcher.uris
-        if (model[:bodyUri].length == 0) 
-          response[:errors] << "Unable to parse body uri from #{data["text"]}"
+        if (model[:bodyUri].length == 0 && annotation_type[:requires_bodyUri]) 
+          response[:errors] << "Unable to parse uri from #{data["text"]}"
         end
         if body_tags["relation"] || model[:relationTerms].length > 0
           model[:isRelation] = true
@@ -231,8 +231,6 @@ module HypothesisClient::MapperPrototype
           model[:motivation] ="oa:describing"
           model[:bodyText] = body_matcher.text
           model[:bodyCts] = body_matcher.cts
-          model[:bodyTrans] = body_matcher.translation
-          model[:bodyTransLang] = body_matcher.translation_lang
         else 
           # otherwise we assume it's a plain link
           model[:motivation] ="oa:linking"
@@ -394,7 +392,7 @@ module HypothesisClient::MapperPrototype
           {
             "@id" => "#{obj[:id]}#body-1",
             "@type" => "oa:SpecificResource", 
-            'hasSource'] = obj[:bodyCts]
+            'hasSource' => obj[:bodyCts],
             "hasSelector" => {
               "@id" => "#{obj[:id]}#body-1-sel-1",
               "@type" => "oa:TextQuoteSelector",
@@ -403,10 +401,7 @@ module HypothesisClient::MapperPrototype
           },
           {
             "@id" => "#{obj[:id]}#body-2",
-            "@type" => "cnt:ContentAsText",
-            "cnt:chars" => obj[:bodyTrans],
-            "dc:language" => obj[:bodyTransLang] 
-             # TODO need lang here
+             #TODO
           }
         ]
       elsif obj[:attestsTo]
@@ -430,11 +425,11 @@ module HypothesisClient::MapperPrototype
           graph << 
             {
               "@id" =>  attest_uri,
-              "@type" => LAWD_ATTESTATION
+              "@type" => LAWD_ATTESTATION,
               "http://purl.org/spar/cito/citesAsEvidence" => obj[:bodyCts]
             }
         end
-        graph << make_citation_graph(obj[:bodyCts))
+        graph << make_citation_graph(obj[:bodyCts])
         oa['hasBody'] = { 
           "@context" => REL_GRAPH_CONTEXT.merge(obj[:ontology].get_context()),
           "@graph" => graph 

@@ -9,6 +9,7 @@ module HypothesisClient
       require 'hypothesis-client/helpers/uris/perseids'
       require 'hypothesis-client/helpers/uris/visiblewords'
       require 'hypothesis-client/helpers/uris/hypothesis'
+      require 'hypothesis-client/helpers/uris/perseusandhypothesis'
     end
   end
 end

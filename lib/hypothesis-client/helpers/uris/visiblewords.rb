@@ -7,7 +7,7 @@ module HypothesisClient
         BIO_MATCH = Regexp.new('(visiblewords:(\w+)(_\d+))')
 
         attr_accessor :can_match, :error, :uris, :cts, :text
-        def initialize(a_content)
+        def initialize(a_content,a_target=nil)
           @content = a_content
           @can_match = false
           @text = "#{@content}"

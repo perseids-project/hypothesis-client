@@ -3,24 +3,39 @@ require 'hypothesis-client/helpers'
 
 describe HypothesisClient::Helpers::Text::SNAP do
 
-  context "successful match" do 
-    let(:mapped) { HypothesisClient::Helpers::Uris::Smith.new("alexander-bio-1") }
+  context "successful single match" do 
+    it 'can match and find term' do
+      target = double("target")
+      allow(target).to receive(:uris).and_return("http://data.perseus.org/people/smith:alexander-1")
+      mapped =HypothesisClient::Helpers::Text::SNAP.new("grandfather", target)
 
-    it 'mapped' do
       expect(mapped.can_match).to be true 
-    end
-
-    it 'created the uri' do
-      expect(mapped.uris).to match_array(["http://data.perseus.org/people/smith:alexander-1#this"])
+      expect(mapped.relation_terms).to match_array(["snap:GrandfatherOf"])
     end
   end
 
-  context "failed match" do 
-    let(:mapped) { HypothesisClient::Helpers::Uris::Smith.new("alexander") }
+  context "correctly failed single match" do 
 
-    it 'mapped' do
-      expect(mapped.can_match).to be_falsey
+    it 'can match but no term' do
+      target = double("target")
+      allow(target).to receive(:uris).and_return("http://data.perseus.org/people/smith:alexander-1")
+      mapped = HypothesisClient::Helpers::Text::SNAP.new("grandpere",target)
+      expect(mapped.can_match).to be true 
+      expect(mapped.relation_terms).to match_array([])
     end
 
   end
+
+  context "successful multiple match" do 
+
+    it 'can match and find terms' do
+      target = double("target")
+      allow(target).to receive(:uris).and_return("http://data.perseus.org/people/smith:alexander-1")
+      mapped = HypothesisClient::Helpers::Text::SNAP.new(" grandfather\n sister",target)
+      expect(mapped.can_match).to be true 
+      expect(mapped.relation_terms).to match_array(["snap:GrandfatherOf", "snap:SisterOf"])
+    end
+
+  end
+
 end

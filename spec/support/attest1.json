@@ -15,7 +15,7 @@
     }, 
     "consumer": "00000000-0000-0000-0000-000000000000", 
     "tags": [
-        "attestation"
+        "attestation joth"
     ], 
     "created": "2015-02-25T20:12:37.523941+00:00", 
     "text": "http://data.perseus.org/citations/urn:cts:greekLit:tlg0525.tlg001.perseus-eng1:10.35.1\nAbas", 

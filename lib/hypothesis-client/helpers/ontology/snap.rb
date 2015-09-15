@@ -56,6 +56,7 @@ module HypothesisClient
         def get_term(a_term)
           ONTO_MAP[a_term.downcase]
         end
+
       end
     end
   end

@@ -1,7 +1,7 @@
 module HypothesisClient
   module Helpers
     module Uris
-      class Perseus
+      class PerseusAndHypothesis
 
         PERSEUS_URI = Regexp.new("http:\/\/data.perseus.org\/citations\/urn:cts:[^\S\n]+" )
         CTS_PASSAGE_URN = Regexp.new("urn:cts:(.*?):([^\.]+)(?:\.([^\.]+))\.?(.*?)?:(.+)$")
@@ -9,6 +9,7 @@ module HypothesisClient
         LAWD_WRITTENWORK = "http://lawd.info/ontology/WrittenWork"
         LAWD_CITATION = "http://lawd.info/ontology/Citation"
         LAWD_CONCEPTUALWORK = "http://lawd.info/ontology/ConceptualWork"
+        HYPOTHESIS_URI = /^(https:\/\/hypothes\.is\/a\/[^\/]+)$/
 
         attr_accessor :can_match, :error, :uris, :cts, :text
         def initialize(a_content,a_target=nil)
@@ -22,8 +23,6 @@ module HypothesisClient
  
           @content.scan(PERSEUS_URI).each do |u|
             begin
-              @can_match = true
-              @uris << u
               @cts << parse_urn(u)
               # we want any text that isn't part of the uris
               @text.sub!(u,'')
@@ -34,9 +33,16 @@ module HypothesisClient
               errors << e.to_s
             end
           end
+          # now look for hypothesis uri
+          @content.scan(HYPOTHESIS_URI).each do |p|
+            u = p[0]
+            u = p[0]
+            @uris << u
+          end
           if (errors.length > 0) 
             @error = errors.join("\n")
           end
+          @can_match = @uris.length > 0 && @cts.length > 0
         end
 
 
