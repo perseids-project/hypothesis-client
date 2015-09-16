@@ -1,0 +1,36 @@
+{
+  "@context": "http://www.w3.org/ns/oa-context-20130208.json",
+  "@id": "urn:cite:perseus:pdljann.7ZsVTHW_SZKJwkq5hqa4sg.1.1",
+  "annotatedBy": {
+    "@type": "foaf:Person",
+    "@id": "test"
+  },
+  "@type": "oa:Annotation",
+  "dcterms:source": "https://hypothes.is/api/annotations/7ZsVTHW_SZKJwkq5hqa4sg",
+  "dcterms:title": "http://data.perseus.org/people/smith:glaucus-1#this identifies Glaucus as person in http://www.perseids.org/sites/smiths/glaucus-bio-1.html",
+  "annotatedAt": "2015-09-09T19:22:53.284847+00:00",
+  "motivatedBy": "oa:identifying",
+  "serializedBy": {
+    "@id": "https://hypothes.is",
+    "@type": "prov:SoftwareAgent"
+  },
+  "hasTarget": {
+    "@id": "urn:cite:perseus:pdljann.7ZsVTHW_SZKJwkq5hqa4sg.1.1#target-1",
+    "@type": "oa:SpecificResource",
+    "hasSelector": {
+      "@id": "urn:cite:perseus:pdljann.7ZsVTHW_SZKJwkq5hqa4sg.1.1#target-1-sel-1",
+      "@type": "oa:TextQuoteSelector",
+      "exact": "Glaucus",
+      "prefix": "104:entry=glaucus-bio-1');\n\t\t\n\t\t",
+      "suffix": "\n\n（*Glau/kos). \n\n1. A grandson o"
+    },
+    "hasSource": {
+      "@id": "http://www.perseids.org/sites/smiths/glaucus-bio-1.html"
+    }
+  },
+  "hasBody": [
+    {
+      "@id": "http://data.perseus.org/people/smith:glaucus-1#this"
+    }
+  ]
+}

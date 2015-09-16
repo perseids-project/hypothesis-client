@@ -3,10 +3,11 @@ module HypothesisClient
     module Text
       class SNAP
 
-        attr_accessor :relation_terms, :can_match, :error, :uris
+        attr_accessor :relation_terms, :can_match, :error, :uris, :text
 
         def initialize(a_content,a_target=nil)
           @can_match = a_content != '' && a_target.uris.length > 0
+          @text = nil
           @uris = a_target.uris
           @ontology = HypothesisClient::Helpers::Ontology::SNAP.new
           @relation_terms = []

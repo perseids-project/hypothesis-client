@@ -1,0 +1,36 @@
+{
+  "@context": "http://www.w3.org/ns/oa-context-20130208.json",
+  "@id": "urn:cite:perseus:pdljann.t-8X_o3FRX2wLAjSWW0HSA.1.1",
+  "annotatedBy": {
+    "@type": "foaf:Person",
+    "@id": "test"
+  },
+  "@type": "oa:Annotation",
+  "dcterms:source": "https://hypothes.is/api/annotations/t-8X_o3FRX2wLAjSWW0HSA",
+  "dcterms:title": "http://pleiades.stoa.org/places/541070#this identifies Potniae as place in http://www.perseids.org/sites/smiths/glaucus-bio-1.html",
+  "annotatedAt": "2015-09-09T19:55:40.718451+00:00",
+  "motivatedBy": "oa:identifying",
+  "serializedBy": {
+    "@id": "https://hypothes.is",
+    "@type": "prov:SoftwareAgent"
+  },
+  "hasTarget": {
+    "@id": "urn:cite:perseus:pdljann.t-8X_o3FRX2wLAjSWW0HSA.1.1#target-1",
+    "@type": "oa:SpecificResource",
+    "hasSelector": {
+      "@id": "urn:cite:perseus:pdljann.t-8X_o3FRX2wLAjSWW0HSA.1.1#target-1-sel-1",
+      "@type": "oa:TextQuoteSelector",
+      "exact": "Potniae",
+      "prefix": "9.3; Paus. 2.4.2.)\nHe\n lived at ",
+      "suffix": ", despised the power of Aphrodit"
+    },
+    "hasSource": {
+      "@id": "http://www.perseids.org/sites/smiths/glaucus-bio-1.html"
+    }
+  },
+  "hasBody": [
+    {
+      "@id": "http://pleiades.stoa.org/places/541070#this"
+    }
+  ]
+}

@@ -4,7 +4,7 @@ module HypothesisClient
       class Perseus
 
         PERSEUS_URI = Regexp.new("http:\/\/data.perseus.org\/citations\/urn:cts:[^\S\n]+" )
-        CTS_PASSAGE_URN = Regexp.new("urn:cts:(.*?):([^\.]+)(?:\.([^\.]+))\.?(.*?)?:(.+)$")
+        CTS_PASSAGE_URN = Regexp.new("urn:cts:(.*?):([^\.]+)(?:\.([^\.]+))\.?(.*?)?:([^@\n]+)(@(.+))?$")
         CTS_URN = Regexp.new("urn:cts:(.*?):([^\.]+)\.(?:([^\.]+)\.)?([^:]+)?$")
         LAWD_WRITTENWORK = "http://lawd.info/ontology/WrittenWork"
         LAWD_CITATION = "http://lawd.info/ontology/Citation"
@@ -24,12 +24,18 @@ module HypothesisClient
             begin
               @can_match = true
               @uris << u
-              @cts << parse_urn(u)
+              parsed = self.class.parse_urn(u) 
+              @cts << parsed
+              # if a pseudo-subref wasn't supplied
               # we want any text that isn't part of the uris
-              @text.sub!(u,'')
-              @text.sub!(/^\n/,'')
-              @text.sub!(/\n$/,'')
-              @text.sub!(/\n/,' ')
+              if parsed['text'].nil?
+                @text.sub!(u,'')
+                @text.sub!(/^\n/,'')
+                @text.sub!(/\n$/,'')
+                @text.sub!(/\n/,' ')
+              else
+                @text = parsed['text']
+              end
             rescue => e
               errors << e.to_s
             end
@@ -39,8 +45,7 @@ module HypothesisClient
           end
         end
 
-
-        def parse_urn(uri)
+        def self.parse_urn(uri)
           urn_passage_parts = CTS_PASSAGE_URN.match(uri)
           if (urn_passage_parts) 
             ns = urn_passage_parts[1]
@@ -48,6 +53,7 @@ module HypothesisClient
             wk = urn_passage_parts[3]
             ver = urn_passage_parts[4]
             psg = urn_passage_parts[5]
+            text = urn_passage_parts[7]
           else
             urn_parts = CTS_URN.match(uri)
             if (urn_parts)
@@ -77,12 +83,13 @@ module HypothesisClient
           end
 
           { 
-            'uri' => uri,   
+            'uri' => uri.sub(/@.*$/,''),    #strip pseudosubref
             "type" => type,
             'textgroup' => "urn:cts:#{ns}:#{tg}",
             'work' => "urn:cts:#{ns}:#{tg}.#{wk}",
             'version' => ver == '' || ver.nil? ? nil : "urn:cts:#{ns}:#{tg}.#{wk}.#{ver}",
-            'passage' => type == LAWD_CITATION ? psg : nil
+            'passage' => type == LAWD_CITATION ? psg : nil,
+            'text' => text  
           }
         end
 

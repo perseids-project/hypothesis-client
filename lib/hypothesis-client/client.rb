@@ -45,7 +45,7 @@ module HypothesisClient
         end
       rescue => e
         respobj = { :is_error  => true,
-                    :error => e.backtrace }
+                    :error => "#{e} #{e.backtrace}" }
       end
       respobj
       

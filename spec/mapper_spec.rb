@@ -72,11 +72,11 @@ describe HypothesisClient::MapperPrototype do
       expect(mapped[:data]["hasBody"]).to be_truthy
       expect(mapped[:data]["hasBody"]["@graph"]).to be_truthy
       expect(mapped[:data]["hasBody"]["@graph"][0]).to be_truthy
-      expect(mapped[:data]["hasBody"]["@graph"][0]["@id"]).to eq("http://data.perseus.org/people/smith:clytaemnestra-1#this")
+      expect(mapped[:data]["hasBody"]["@graph"][0]["@id"]).to eq("test#rel-target")
       expect(mapped[:data]["hasBody"]["@graph"][1]["@id"]).to eq("http://data.perseus.org/people/smith:castor-1#this")
       expect(mapped[:data]["hasBody"]["@graph"][2]["@id"]).to eq("test#bond-1-1")
       expect(mapped[:data]["hasBody"]["@graph"][3]["@id"]).to eq("test#bond-2-1")
-      expect(mapped[:data]["hasBody"]["@graph"][3]["snap:bond-with"]["@id"]).to eq("http://data.perseus.org/people/smith:clytaemnestra-1#this")
+      expect(mapped[:data]["hasBody"]["@graph"][3]["snap:bond-with"]["@id"]).to eq("test#rel-target")
     end
   end
   context "relation 2 test" do 
@@ -92,11 +92,9 @@ describe HypothesisClient::MapperPrototype do
       expect(mapped[:data]["hasBody"]).to be_truthy
       expect(mapped[:data]["hasBody"]["@graph"]).to be_truthy
       expect(mapped[:data]["hasBody"]["@graph"][0]).to be_truthy
-      expect(mapped[:data]["hasBody"]["@graph"][0]["@id"]).to eq("http://data.perseus.org/people/smith:clytaemnestra-1#this")
       expect(mapped[:data]["hasBody"]["@graph"][1]["@id"]).to eq("http://data.perseus.org/people/smith:castor-1#this")
       expect(mapped[:data]["hasBody"]["@graph"][2]["@id"]).to eq("test#bond-1-1")
-      expect(mapped[:data]["hasBody"]["@graph"][4]["@id"]).to eq("test#bond-3-1")
-      expect(mapped[:data]["hasBody"]["@graph"][4]["snap:bond-with"]["@id"]).to eq("http://data.perseus.org/people/smith:clytaemnestra-1#this")
+      expect(mapped[:data]["hasBody"]["@graph"][2]["snap:bond-with"]["@id"]).to eq("test#rel-target")
     end
   end
 
@@ -139,7 +137,7 @@ describe HypothesisClient::MapperPrototype do
     $mapper = HypothesisClient::Helpers::Uris::Perseus.new("")
 
     it 'parsed a full urn' do 
-       parsed = $mapper.parse_urn("urn:cts:greekLit:tlg0012.tlg001.perseus-grc1:1.1")
+       parsed = $mapper.class.parse_urn("urn:cts:greekLit:tlg0012.tlg001.perseus-grc1:1.1")
        expect(parsed['textgroup']).to eq("urn:cts:greekLit:tlg0012")
        expect(parsed['work']).to eq("urn:cts:greekLit:tlg0012.tlg001")
        expect(parsed['version']).to eq("urn:cts:greekLit:tlg0012.tlg001.perseus-grc1")
@@ -147,7 +145,7 @@ describe HypothesisClient::MapperPrototype do
     end
 
     it 'parsed a work with passage urn' do 
-       parsed = $mapper.parse_urn("urn:cts:greekLit:tlg0012.tlg001:1.1")
+       parsed = $mapper.class.parse_urn("urn:cts:greekLit:tlg0012.tlg001:1.1")
        expect(parsed['type']).to eq(HypothesisClient::MapperPrototype::JOTH::LAWD_CITATION)
        expect(parsed['textgroup']).to eq("urn:cts:greekLit:tlg0012")
        expect(parsed['work']).to eq("urn:cts:greekLit:tlg0012.tlg001")
@@ -156,7 +154,7 @@ describe HypothesisClient::MapperPrototype do
     end
 
     it 'parsed a full urn without passage' do 
-       parsed = $mapper.parse_urn("urn:cts:greekLit:tlg0012.tlg001.perseus-grc1")
+       parsed = $mapper.class.parse_urn("urn:cts:greekLit:tlg0012.tlg001.perseus-grc1")
        expect(parsed['textgroup']).to eq("urn:cts:greekLit:tlg0012")
        expect(parsed['work']).to eq("urn:cts:greekLit:tlg0012.tlg001")
        expect(parsed['version']).to eq("urn:cts:greekLit:tlg0012.tlg001.perseus-grc1")
@@ -165,7 +163,7 @@ describe HypothesisClient::MapperPrototype do
     end
 
     it 'raised an error' do 
-       expect { parsed = $mapper.parse_urn("urn:cts:greekLit:tlg0012")}.to raise_error
+       expect { parsed = $mapper.class.parse_urn("urn:cts:greekLit:tlg0012")}.to raise_error
     end
   end
   context "owner test" do 

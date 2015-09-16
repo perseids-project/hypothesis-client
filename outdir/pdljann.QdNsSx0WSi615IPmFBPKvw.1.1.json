@@ -1,0 +1,69 @@
+{
+  "@context": "http://www.w3.org/ns/oa-context-20130208.json",
+  "@id": "urn:cite:perseus:pdljann.QdNsSx0WSi615IPmFBPKvw.1.1",
+  "annotatedBy": {
+    "@type": "foaf:Person",
+    "@id": "test"
+  },
+  "@type": "oa:Annotation",
+  "dcterms:source": "https://hypothes.is/api/annotations/QdNsSx0WSi615IPmFBPKvw",
+  "dcterms:title": "https://hypothes.is/a/_iP3_i7wRyStdcyFG5SGxg is linked to grandson  in http://www.perseids.org/sites/smiths/glaucus-bio-1.html",
+  "annotatedAt": "2015-09-09T19:33:09.879232+00:00",
+  "motivatedBy": "oa:linking",
+  "serializedBy": {
+    "@id": "https://hypothes.is",
+    "@type": "prov:SoftwareAgent"
+  },
+  "hasTarget": {
+    "@id": "urn:cite:perseus:pdljann.QdNsSx0WSi615IPmFBPKvw.1.1#target-1",
+    "@type": "oa:SpecificResource",
+    "hasSelector": {
+      "@id": "urn:cite:perseus:pdljann.QdNsSx0WSi615IPmFBPKvw.1.1#target-1-sel-1",
+      "@type": "oa:TextQuoteSelector",
+      "exact": "grandson ",
+      "prefix": "\n\t\tGlaucus\n\n（*Glau/kos). \n\n1. A ",
+      "suffix": "of Aeolus, son of Sisyphus and M"
+    },
+    "hasSource": {
+      "@id": "http://www.perseids.org/sites/smiths/glaucus-bio-1.html"
+    }
+  },
+  "hasBody": {
+    "@context": {
+      "lawd": "http://lawd.info/ontology/",
+      "snap": "http://onto.snapdrgn.net/snap#",
+      "perseusrdf": "http://data.perseus.org/rdfvocab/addons/"
+    },
+    "@graph": [
+      {
+        "@id": "https://hypothes.is/a/_iP3_i7wRyStdcyFG5SGxg",
+        "http://lawd.info/ontology/hasAttestation": "urn:cite:perseus:pdljann.QdNsSx0WSi615IPmFBPKvw.1.1#attest-1"
+      },
+      {
+        "@id": "urn:cite:perseus:pdljann.QdNsSx0WSi615IPmFBPKvw.1.1#attest-1",
+        "@type": "http://lawd.info/ontology/Attestation",
+        "http://purl.org/spar/cito/citesAsEvidence": [
+          "http://data.perseus.org/citations/urn:cts:greekLit:tlg0012.tlg001.perseus-eng1:6.116-6.155"
+        ]
+      },
+      {
+        "@id": "http://data.perseus.org/citations/urn:cts:greekLit:tlg0012.tlg001.perseus-eng1:6.116-6.155",
+        "@type": "http://lawd.info/ontology/Citation",
+        "foaf:homepage": {
+          "@id": "http://data.perseus.org/citations/urn:cts:greekLit:tlg0012.tlg001.perseus-eng1:6.116-6.155"
+        },
+        "http://lawd.info/ontology/represents": {
+          "@id": "http://data.perseus.org/texts/urn:cts:greekLit:tlg0012.tlg001.perseus-eng1",
+          "@type": "http://lawd.info/ontology/WrittenWork",
+          "http://lawd.info/ontology/embodies": {
+            "@id": "http://data.perseus.org/texts/urn:cts:greekLit:tlg0012.tlg001",
+            "@type": "http://lawd.info/ontology/ConceptualWork"
+          },
+          "rdfs:isDefinedBy": {
+            "@id": "http://data.perseus.org/catalog/urn:cts:greekLit:tlg0012.tlg001.perseus-eng1"
+          }
+        }
+      }
+    ]
+  }
+}

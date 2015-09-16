@@ -72,7 +72,7 @@ module HypothesisClient::MapperPrototype
             'place' => [ HypothesisClient::Helpers::Uris::Pleiades ],
             'relation' => [ HypothesisClient::Helpers::Text::SNAP ],
             'person' => [ HypothesisClient::Helpers::Uris::Smith, HypothesisClient::Helpers::Uris::Any ],
-            'target' => [ HypothesisClient::Helpers::Uris::SmithText, HypothesClient::Helpers::Uris::SmithStableHTML ]
+            'target' => [ HypothesisClient::Helpers::Uris::Smith ]
           }
         } 
       end
@@ -189,20 +189,21 @@ module HypothesisClient::MapperPrototype
         if target_matcher.uris.length > 0
           model[:targetPerson] = (target_matcher.uris)[0]
         end
-        if target_matcher.cts.length > 0
+        if target_matcher.cts && target_matcher.cts.length > 0
           model[:targetCTS] = (target_matcher.cts)[0]
         end
         model[:bodyUri] = []
         model[:bodyCts] = []
         model[:attestUri] = []
         model[:bodyUri] = body_matcher.uris
-        if (model[:bodyUri].length == 0 && annotation_type[:requires_bodyUri]) 
+        if (model[:bodyUri].length == 0) 
           response[:errors] << "Unable to parse uri from #{data["text"]}"
+          puts target_matcher.inspect
         end
         if body_tags["relation"] || model[:relationTerms].length > 0
           model[:isRelation] = true
-          # if there was any leftover text check to see if it is an attestation
-          if (body_matcher.text =~ /hasAttestation/i)
+          # if there was any leftover text check to see if it is an attestation'
+          if (body_matcher.text && body_matcher.text =~ /hasAttestation/i)
             attest_matcher = find_match(annotation_type,['attestation'],body_matcher.text)
             model[:attestUri] = attest_matcher.uris
           end
@@ -228,6 +229,7 @@ module HypothesisClient::MapperPrototype
           model[:motivation] ="oa:linking"
           model[:bodyCts] = body_matcher.cts
         elsif body_tags["characterizationof"]
+          model[:isCharacterization] = true
           model[:motivation] ="oa:describing"
           model[:bodyText] = body_matcher.text
           model[:bodyCts] = body_matcher.cts
@@ -286,26 +288,22 @@ module HypothesisClient::MapperPrototype
       if obj[:isRelation]
         graph = []
         mainnode = {}
-        if obj[:targetPerson]
-          mainnode["@id"] = obj[:targetPerson]
-        else
-          # if we didn't have a target person, just copy the original target
-          # with its selector into the graph - we don't want the full oa context
-          # though so use full namespaced properties
-          mainnode["@id"] = "#{obj[:id]}#rel-target"
-          mainnode["@type"] = "http://www.w3.org/ns/oa#SpecificResource"
-          mainnode['http://www.w3.org/ns/oa#hasSelector'] = {}
-          mainnode['http://www.w3.org/ns/oa#hasSelector']['@id'] = oa['hasTarget']['hasSelector']['@id']
-          mainnode['http://www.w3.org/ns/oa#hasSelector']['@type'] = 'http://www.w3.org/ns/oa#TextQuoteSelector'
-          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#exact'] = (oa['hasTarget']['hasSelector']['exact'] || '').force_encoding("UTF-8")
-          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#prefix'] = (oa['hasTarget']['hasSelector']['prefix'] || '').force_encoding("UTF-8")
-          mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#suffix'] = (oa['hasTarget']['hasSelector']['suffix'] || '').force_encoding("UTF-8")
-          if (obj[:targetCTS]) 
-            mainnode['hasSource'] = { '@id' => obj[:targetCTS] }
-          else 
-            mainnode['hasSource'] = { '@id' => obj[:targetUri] }
-          end  
-        end
+        # copy the original target
+        # with its selector into the graph - we don't want the full oa context
+        # though so use full namespaced properties
+        mainnode["@id"] = "#{obj[:id]}#rel-target"
+        mainnode["@type"] = "http://www.w3.org/ns/oa#SpecificResource"
+        mainnode['http://www.w3.org/ns/oa#hasSelector'] = {}
+        mainnode['http://www.w3.org/ns/oa#hasSelector']['@id'] = oa['hasTarget']['hasSelector']['@id']
+        mainnode['http://www.w3.org/ns/oa#hasSelector']['@type'] = 'http://www.w3.org/ns/oa#TextQuoteSelector'
+        mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#exact'] = (oa['hasTarget']['hasSelector']['exact'] || '').force_encoding("UTF-8")
+        mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#prefix'] = (oa['hasTarget']['hasSelector']['prefix'] || '').force_encoding("UTF-8")
+        mainnode['http://www.w3.org/ns/oa#hasSelector']['http://www.w3.org/ns/oa#suffix'] = (oa['hasTarget']['hasSelector']['suffix'] || '').force_encoding("UTF-8")
+        if (obj[:targetCTS]) 
+          mainnode['hasSource'] = { '@id' => obj[:targetCTS] }
+        else 
+          mainnode['hasSource'] = { '@id' => obj[:targetUri] }
+        end  
         bond_uris = Hash.new
         bonds = []
         attestations = []
@@ -360,7 +358,7 @@ module HypothesisClient::MapperPrototype
          end
       elsif obj[:isAttestation]
         graph = []
-        attestations = obj[:bodyCts] || obj[:bodyUri]
+        attestations = obj[:bodyCts] 
         attestations.each_with_index do |u,i|
           attest_uri = "#{obj[:id]}#attest-#{i+1}"
           graph << 
@@ -375,35 +373,33 @@ module HypothesisClient::MapperPrototype
               "http://purl.org/spar/cito/citesAsEvidence" => u['uri'],
               "cnt:chars" => obj[:bodyText]
             }
-          if obj[:bodyCts]
-            graph << make_citation_graph(u)
-          end
+        end
+        obj[:bodyCts].each do |u|
+          graph << make_citation_graph(u)
         end
         oa['hasBody'] = { 
           "@context" => REL_GRAPH_CONTEXT.merge(obj[:ontology].get_context()),
           "@graph" => graph 
         }
-      elsif obj[:characterizationOf]
+      elsif obj[:isCharacterization]
         # cited text from the supplied CTS URN (and its corresponding translation)
         # provides a characterization of the person named in the target selector
         # the original body contained the CTS URN of the cited text as well as the
         # cited text and its translation
-        oa['hasBody'] =  [ 
-          {
-            "@id" => "#{obj[:id]}#body-1",
-            "@type" => "oa:SpecificResource", 
-            'hasSource' => obj[:bodyCts],
-            "hasSelector" => {
-              "@id" => "#{obj[:id]}#body-1-sel-1",
-              "@type" => "oa:TextQuoteSelector",
-              "exact" => obj[:bodyText].force_encoding("UTF-8")
+        oa['hasBody'] =  []
+        obj[:bodyCts].each_with_index do |u,i|
+          oa['hasBody'] <<
+            {
+              "@id" => "#{obj[:id]}#body-#{i+1}",
+              "@type" => "oa:SpecificResource", 
+              'hasSource' => u['uri'],
+              "hasSelector" => {
+                "@id" => "#{obj[:id]}#body-#{i+1}-sel-1",
+                "@type" => "oa:TextQuoteSelector",
+                "exact" => u['text'].force_encoding("UTF-8")
+              }
             }
-          },
-          {
-            "@id" => "#{obj[:id]}#body-2",
-             #TODO
-          }
-        ]
+        end
       elsif obj[:attestsTo]
         # the body of this annotation is a graph which 
         # identifies a bibliographic citation as an attestation
@@ -426,10 +422,12 @@ module HypothesisClient::MapperPrototype
             {
               "@id" =>  attest_uri,
               "@type" => LAWD_ATTESTATION,
-              "http://purl.org/spar/cito/citesAsEvidence" => obj[:bodyCts]
+              "http://purl.org/spar/cito/citesAsEvidence" => obj[:bodyCts].collect { |a| a['uri'] }
             }
         end
-        graph << make_citation_graph(obj[:bodyCts])
+        obj[:bodyCts].each do |u|
+          graph << make_citation_graph(u)
+        end
         oa['hasBody'] = { 
           "@context" => REL_GRAPH_CONTEXT.merge(obj[:ontology].get_context()),
           "@graph" => graph 

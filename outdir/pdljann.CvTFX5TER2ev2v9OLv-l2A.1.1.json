@@ -1,0 +1,69 @@
+{
+  "@context": "http://www.w3.org/ns/oa-context-20130208.json",
+  "@id": "urn:cite:perseus:pdljann.CvTFX5TER2ev2v9OLv-l2A.1.1",
+  "annotatedBy": {
+    "@type": "foaf:Person",
+    "@id": "test"
+  },
+  "@type": "oa:Annotation",
+  "dcterms:source": "https://hypothes.is/api/annotations/CvTFX5TER2ev2v9OLv-l2A",
+  "dcterms:title": "http://data.perseus.org/people/smith:glaucus-1#this identifies Aeolus as snap:GrandsonOf in http://www.perseids.org/sites/smiths/glaucus-bio-1.html",
+  "annotatedAt": "2015-09-15T20:37:59.276847+00:00",
+  "motivatedBy": "oa:identifying",
+  "serializedBy": {
+    "@id": "https://hypothes.is",
+    "@type": "prov:SoftwareAgent"
+  },
+  "hasTarget": {
+    "@id": "urn:cite:perseus:pdljann.CvTFX5TER2ev2v9OLv-l2A.1.1#target-1",
+    "@type": "oa:SpecificResource",
+    "hasSelector": {
+      "@id": "urn:cite:perseus:pdljann.CvTFX5TER2ev2v9OLv-l2A.1.1#target-1-sel-1",
+      "@type": "oa:TextQuoteSelector",
+      "exact": "Aeolus",
+      "prefix": "（*Glau/kos). \n\n1. A grandson of ",
+      "suffix": ", son of Sisyphus and Merope, an"
+    },
+    "hasSource": {
+      "@id": "http://www.perseids.org/sites/smiths/glaucus-bio-1.html"
+    }
+  },
+  "hasBody": {
+    "@context": {
+      "lawd": "http://lawd.info/ontology/",
+      "snap": "http://onto.snapdrgn.net/snap#",
+      "perseusrdf": "http://data.perseus.org/rdfvocab/addons/"
+    },
+    "@graph": [
+      {
+        "@id": "urn:cite:perseus:pdljann.CvTFX5TER2ev2v9OLv-l2A.1.1#rel-target",
+        "@type": "http://www.w3.org/ns/oa#SpecificResource",
+        "http://www.w3.org/ns/oa#hasSelector": {
+          "@id": "urn:cite:perseus:pdljann.CvTFX5TER2ev2v9OLv-l2A.1.1#target-1-sel-1",
+          "@type": "http://www.w3.org/ns/oa#TextQuoteSelector",
+          "http://www.w3.org/ns/oa#exact": "Aeolus",
+          "http://www.w3.org/ns/oa#prefix": "（*Glau/kos). \n\n1. A grandson of ",
+          "http://www.w3.org/ns/oa#suffix": ", son of Sisyphus and Merope, an"
+        },
+        "hasSource": {
+          "@id": "http://www.perseids.org/sites/smiths/glaucus-bio-1.html"
+        }
+      },
+      {
+        "@id": "http://data.perseus.org/people/smith:glaucus-1#this",
+        "snap:has-bond": [
+          "urn:cite:perseus:pdljann.CvTFX5TER2ev2v9OLv-l2A.1.1#bond-1-1"
+        ]
+      },
+      {
+        "@id": "urn:cite:perseus:pdljann.CvTFX5TER2ev2v9OLv-l2A.1.1#bond-1-1",
+        "@type": [
+          "snap:GrandsonOf"
+        ],
+        "snap:bond-with": {
+          "@id": "urn:cite:perseus:pdljann.CvTFX5TER2ev2v9OLv-l2A.1.1#rel-target"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "@context": "http://www.w3.org/ns/oa-context-20130208.json",
+  "@id": "urn:cite:perseus:pdljann.rqBmsOvPSiS3O2uDmbheLQ.1.1",
+  "annotatedBy": {
+    "@type": "foaf:Person",
+    "@id": "test"
+  },
+  "@type": "oa:Annotation",
+  "dcterms:source": "https://hypothes.is/api/annotations/rqBmsOvPSiS3O2uDmbheLQ",
+  "dcterms:title": "http://data.perseus.org/people/smith:aeolus-1#this identifies Aeolus as person in http://www.perseids.org/sites/smiths/glaucus-bio-1.html",
+  "annotatedAt": "2015-09-09T19:28:43.505504+00:00",
+  "motivatedBy": "oa:identifying",
+  "serializedBy": {
+    "@id": "https://hypothes.is",
+    "@type": "prov:SoftwareAgent"
+  },
+  "hasTarget": {
+    "@id": "urn:cite:perseus:pdljann.rqBmsOvPSiS3O2uDmbheLQ.1.1#target-1",
+    "@type": "oa:SpecificResource",
+    "hasSelector": {
+      "@id": "urn:cite:perseus:pdljann.rqBmsOvPSiS3O2uDmbheLQ.1.1#target-1-sel-1",
+      "@type": "oa:TextQuoteSelector",
+      "exact": "Aeolus",
+      "prefix": "（*Glau/kos). \n\n1. A grandson of ",
+      "suffix": ", son of Sisyphus and Merope, an"
+    },
+    "hasSource": {
+      "@id": "http://www.perseids.org/sites/smiths/glaucus-bio-1.html"
+    }
+  },
+  "hasBody": [
+    {
+      "@id": "http://data.perseus.org/people/smith:aeolus-1#this"
+    }
+  ]
+}
