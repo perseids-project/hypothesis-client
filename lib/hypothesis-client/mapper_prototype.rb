@@ -72,7 +72,7 @@ module HypothesisClient::MapperPrototype
             'place' => [ HypothesisClient::Helpers::Uris::Pleiades ],
             'relation' => [ HypothesisClient::Helpers::Text::SNAP ],
             'person' => [ HypothesisClient::Helpers::Uris::Smith, HypothesisClient::Helpers::Uris::Any ],
-            'target' => [ HypothesisClient::Helpers::Uris::Smith ]
+            'target' => [ HypothesisClient::Helpers::Uris::SmithPerseids ]
           }
         } 
       end
@@ -180,7 +180,12 @@ module HypothesisClient::MapperPrototype
 
       # if a relationterm was instead supplied in the body, use it
       if model[:relationTerms].length == 0 && body_tags["relation"] && body_matcher.relation_terms
-        model[:relationTerms] << body_matcher.relation_terms
+        model[:relationTerms].concat(body_matcher.relation_terms)
+      end
+
+      # if we still don't have any relationship terms, it's an error
+      if model[:relationTerms].length == 0 && body_tags["relation"]
+        response[:errors] << "Missing or invalid relationship "
       end
 
       # only continue if we are error free
@@ -489,7 +494,7 @@ module HypothesisClient::MapperPrototype
       end
       as_text = ""
       if (obj[:relationTerms].length > 0)
-        as_text = " as #{obj[:relationTerms].join(", ")}" 
+        as_text = " as object of #{obj[:relationTerms].join(", ")} relationship" 
       elsif obj[:isPlace] 
         as_text = " as place"
       elsif obj[:isPerson] 

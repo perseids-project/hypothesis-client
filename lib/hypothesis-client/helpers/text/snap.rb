@@ -13,7 +13,7 @@ module HypothesisClient
           @relation_terms = []
           a_content.split(/\s+/).each do |t|
             term = @ontology.get_term(t)
-            if term
+            unless term.nil?
               @relation_terms << term 
             end
           end

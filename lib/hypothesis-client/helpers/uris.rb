@@ -5,6 +5,7 @@ module HypothesisClient
       require 'hypothesis-client/helpers/uris/perseus'
       require 'hypothesis-client/helpers/uris/smith'
       require 'hypothesis-client/helpers/uris/smithtext'
+      require 'hypothesis-client/helpers/uris/smithperseids'
       require 'hypothesis-client/helpers/uris/pleiades'
       require 'hypothesis-client/helpers/uris/perseids'
       require 'hypothesis-client/helpers/uris/visiblewords'
