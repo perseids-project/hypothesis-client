@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    hypothesis-client (0.0.3)
+    hypothesis-client (0.0.4)
       json
 
 GEM
@@ -32,3 +32,6 @@ DEPENDENCIES
   hypothesis-client!
   rake (~> 10.0)
   rspec
+
+BUNDLED WITH
+   1.10.6

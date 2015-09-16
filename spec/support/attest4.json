@@ -34,7 +34,7 @@
         }
     ], 
     "created": "2015-05-18T23:35:40.468750+00:00", 
-    "text": "http://data.perseus.org/people/visiblewords:johndoe_1\nhasAttestation http://example.org", 
+    "text": "visiblewords:johndoe_1\nhasAttestation http://example.org", 
     "tags": [
         "relation", 
         "father", 
