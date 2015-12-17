@@ -3,10 +3,10 @@ module HypothesisClient
     module Uris
       class SmithPerseids
 
-        PERSEIDS_SITE_URI = Regexp.new('http://perseids.org/sites/smiths/')
+        PERSEIDS_SITE_URI = Regexp.new('http://(www.)?perseids.org/sites/smiths/')
         TEXT_CTS = "urn:cts:pdlrefwk:viaf88890045.003.perseus-eng1"
         PERSON_URI = "http://data.perseus.org/people/smith:"
-        BIO_ENTRY_MATCH = Regexp.new('http://perseids.org/sites/smiths/(.*?)/(.*?)\.html')
+        BIO_ENTRY_MATCH = Regexp.new('http://(?:www.)?perseids.org/sites/smiths/(.*?)/(.*?)\.html')
 
         attr_accessor :can_match, :error, :uris, :cts, :text
 
